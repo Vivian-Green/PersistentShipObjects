@@ -1,0 +1,9 @@
+{
+	"name": "PersistentShipObjects",
+	"version_number": "0.0.0",
+	"website_url": "https://github.com/Vivian-Green/PersistentShipObjects",
+	"description": "keep ya ship's things where ya left 'em",
+	"dependencies": [
+		"Evaisa-LethalLib-0.11.1"
+	]
+}

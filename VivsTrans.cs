@@ -16,7 +16,6 @@ namespace PersistentShipObjects {
         public VivsTrans(Transform transform) {
             position = transform.position;
             rotation = transform.rotation;
-            scale = transform.localScale;
         }
 
         public Transform AsTransform() {

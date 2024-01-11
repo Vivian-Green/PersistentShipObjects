@@ -9,6 +9,13 @@ namespace PersistentShipObjects {
 
     [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObjectClientRpcPostfix")]
     public class ShipBuildModeManagerPatch {
+        internal ManualLogSource mls;
+        void Awake() {
+            mls = PSOplugin.Instance.mls;
+            mls.LogInfo("shipBuildModeManagerPatch is waking up");
+            PSOplugin.Instance.harmony.PatchAll();
+        }
+
         [HarmonyPostfix]
         public static void PlaceShipObjectClientRpcPostfix(Vector3 newPosition, Vector3 newRotation, NetworkObjectReference objectRef, int playerWhoMoved) {
             if (StartOfRound.Instance.localPlayerController.playerClientId > 0) {
@@ -34,14 +41,17 @@ namespace PersistentShipObjects {
             Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + objType + " named " + objName + " at position " + objTrans.position);
             PSOplugin.Instance.SaveObjTransform(objName, objTrans);
         }
-
-        void Awake() {
-            PSOplugin.Instance.harmony.PatchAll(typeof(ShipBuildModeManager));
-        }
     }
 
     [HarmonyPatch(typeof(StartOfRound), "SpawnUnlockable")]
     public class SpawnUnlockablePatch {
+        internal ManualLogSource mls;
+        void Awake() {
+            mls = PSOplugin.Instance.mls;
+            mls.LogInfo("SpawnUnlockablePatch is waking up");
+            PSOplugin.Instance.harmony.PatchAll();
+        }
+
         [HarmonyPostfix]
         static void SpawnUnlockable(int unlockableIndex, GameObject __result) {
             if (__result != null && (PSOplugin.Instance.VivsTranses?.ContainsKey(__result.name) ?? false)) { // if name in config
@@ -51,14 +61,17 @@ namespace PersistentShipObjects {
                 __result.transform.rotation = newTrans.rotation;
             }
         }
-
-        void Awake() {
-            PSOplugin.Instance.harmony.PatchAll(typeof(StartOfRound));
-        }
     }
 
     [HarmonyPatch(typeof(StartOfRound), "LoadShipGrabbableItems")]
     public class LoadShipGrabbableItemsPatch {
+        internal ManualLogSource mls;
+        void Awake() {
+            mls = PSOplugin.Instance.mls;
+            mls.LogInfo("LoadShipGrabbableItemsPatch is waking up");
+            PSOplugin.Instance.harmony.PatchAll();
+        }
+
         [HarmonyTranspiler]
         static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions) {
             int tfIndexInLocalVariablesIsHidingMyGotDangComponent = 0;
@@ -124,7 +137,7 @@ namespace PersistentShipObjects {
     public class PSOplugin : BaseUnityPlugin {
         private const string modGUID = "VivianGreen.PersistantShipObjects";
         private const string modName = "PersistentShipObjects";
-        private const string modVersion = "0.0.0";
+        private const string modVersion = "0.0.1";
 
     public static Config myConfig { get; internal set; }
 
@@ -138,21 +151,20 @@ namespace PersistentShipObjects {
         public bool safeInjection = true; // fucking.. it being false just makes the transpiling slightly slower- it's a load times thing lmao, definitely default to true
 
         void Awake() {
+            mls = BepInEx.Logging.Logger.CreateLogSource(modGUID);
+            mls.LogInfo("PSO says is waking up");
+
             if (Instance == null) {
                 Instance = this;
             }
             myConfig = new(base.Config);
 
             while (true) {
-                Debug.Log("lmao remove this");
+                mls.LogInfo("lmao remove this");
             } // uncomment these
 
             //VivsTranses = Config.shipObjectVivTransforms.Value; // todo: this is either necessary (need to instantiate here if null - doubt) or will break things (overwrite old configs-), and I'm not 100% sure which, so I'm leaving it: ?? new Dictionary<String, VivsTrans> { { "testName", new VivsTrans(new Vector3(0, 0, 0), Quaternion.identity) } };
             //safeInjection = Config.safeInjection.Value ?? true;
-
-
-            mls = BepInEx.Logging.Logger.CreateLogSource(modGUID);
-            mls.LogInfo("item preview says hi");
         }
 
         public bool SaveObjTransform(string name, Transform trans) {
@@ -172,7 +184,7 @@ namespace PersistentShipObjects {
 
                 // Save the configuration
                 while (true) {
-                    Debug.Log("lmao remove this");
+                    mls.LogInfo("lmao remove this");
                 } // uncomment those
                 //Config.shipObjectVivTransforms.Value = VivsTranses;
                 //Config.shipObjectVivTransforms.ConfigFile.Save();

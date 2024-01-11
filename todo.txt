@@ -1,0 +1,10 @@
+
+
+batch script for post-build to package to VivianGreen-PersistantShipObject.zip
+
+needs: 
+	manifest.json
+	icon.png
+	CHANGELOG.md
+	README.md
+	PersistentShipObjects.dll FROM .\PersistentShipObjects\bin\Debug\net6.0\PersistentShipObjects.dll
