@@ -1,12 +1,9 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
-using GameNetcodeStuff;
 using HarmonyLib;
 using System.Reflection.Emit;
-using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Assertions;
 
 namespace PersistentShipObjects {
 
@@ -129,7 +126,7 @@ namespace PersistentShipObjects {
         private const string modName = "PersistentShipObjects";
         private const string modVersion = "0.0.0";
 
-        public static Config myConfig { get; internal set; }
+    public static Config myConfig { get; internal set; }
 
         public Dictionary<string, VivsTrans>? VivsTranses;
 

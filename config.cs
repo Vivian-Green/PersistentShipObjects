@@ -1,5 +1,4 @@
 ﻿using BepInEx.Configuration;
-using BepInEx.Logging;
 using UnityEngine;
 
 namespace PersistentShipObjects {
