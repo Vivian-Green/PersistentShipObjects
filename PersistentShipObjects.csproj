@@ -34,4 +34,8 @@
     </Reference>
   </ItemGroup>
 
+  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
+    <Exec Command="call &quot;C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\export\post-build.bat&quot;" />
+  </Target>
+
 </Project>

@@ -2,6 +2,8 @@ import os
 import json
 import shutil
 import zipfile
+import sys
+import re
 
 # todo: SO MUCH fucking cleanup pls actually clean this up viv, someone might actually look at this one-
 #       if you are someone and this is still here - fuck, sorry
@@ -15,6 +17,8 @@ thunderstore_mod_folder_path = os.path.join(
     os.path.expandvars("%appdata%"), "Thunderstore Mod Manager", "DataFolder", "LethalCompany",
     "profiles", "emptyDev", "BepInEx", "plugins", "VivianGreen-PersistentShipObjects"
 )
+repository_folder_path = os.path.join(os.path.expandvars("%USERPROFILE%"), "Documents", "GitHub", "PersistentShipObjects", "PersistentShipObjects")
+plugin_cs_path = os.path.join(repository_folder_path, "plugin.cs")
 
 manifest_path = os.path.join(rootFolder, "manifest.json")
 export_info_path = os.path.join(rootFolder, "export", "exportInfo.json")
@@ -23,6 +27,12 @@ changelog_path = os.path.join(export_folder_path, "changelog.md")
 VSDLLBuildPath = os.path.join(
     rootFolder, "bin", "Debug", "net6.0", "PersistentShipObjects.dll"
 )
+
+
+noUserInput = False
+if len(sys.argv) > 1:
+    if sys.argv[1] == "y":
+        noUserInput = True
 
 
 def get_new_version(exportInfo):
@@ -89,6 +99,12 @@ def getNewestVersionFromChangelog(changelogs):
     actual_version = version_line[0].strip()
     return actual_version
 
+def inputIfHuman(defaultArg):
+    if (noUserInput):
+        print("defaulting to: "+defaultArg)
+        return defaultArg
+    return input()
+
 
 def get_changelog_texts(changelog_path, version):
     print(
@@ -97,7 +113,7 @@ def get_changelog_texts(changelog_path, version):
 
     bullet_texts = []
     while True:
-        user_input = input().strip()
+        user_input = inputIfHuman("!").strip()
         if user_input == "!":
             break
         bullet_texts.append(user_input)
@@ -112,6 +128,18 @@ def get_changelog_texts(changelog_path, version):
     content = read_file(changelog_path)
 
     return f"{new_changelog_texts}{content}"
+
+def incrementVersion(version):
+    # Split the version into major, minor, and patch components
+    major, minor, patch = map(int, version.split('.'))
+
+    # Increment the patch version
+    patch += 1
+
+    # Combine the components back into a version string
+    new_version = f"{major}.{minor}.{patch}"
+
+    return new_version
 
 
 def delete_bak_files(folder_path):
@@ -184,8 +212,9 @@ def confirmChangelog(changelog_texts):
         print("     2. Undo")
         print("     3. Merge")
         print("     4. Merge <int>")
+        print(" Enter your choice: ")
 
-        user_input = input("Enter your choice: ").strip().lower()
+        user_input = inputIfHuman("1").strip().lower()
 
         # todo: switch to cases
 
@@ -208,8 +237,20 @@ def confirmChangelog(changelog_texts):
 
     return changelog_texts
 
+def replace_version_in_plugin_cs(file_path, new_version):
+    with open(file_path, 'r') as file:
+        content = file.read()
 
-def main():
+    # Use a regular expression to match and replace the version attribute
+    pattern = r'BepInPlugin\("VivianGreen.PersistentShipObjects", "PersistentShipObjects", "[0-9.]+"\)'
+    replacement = f'BepInPlugin("VivianGreen.PersistentShipObjects", "PersistentShipObjects", "{incrementVersion(new_version)}")' # set to 1 more than the current version to avoid making this be a prefix- lmao
+    content = re.sub(pattern, replacement, content)
+
+    with open(file_path, 'w') as file:
+        file.write(content)
+
+
+def main():    
     # Read exportInfo
     with open(export_info_path, "r") as exportConfig:
         exportInfo = json.load(exportConfig)
@@ -235,6 +276,12 @@ def main():
 
     # Copy manifest.json
     copy_files(manifest_path, export_folder_path)
+
+    # hacky thing to edit bepinex attibute to 1 more than the current version (to avoid a pre-build task & keep current version there in sync with everywhere else- lmao)
+    # will NOT be accurate if this is ran from a build task & doesn't have a patch note for this version
+    # so.. don't fucking drop a full release without any patch notes?
+    # todo: do this properly in a pre-build task
+    replace_version_in_plugin_cs(plugin_cs_path, new_version)
 
     # cleanup & export
     delete_bak_files(export_folder_path)

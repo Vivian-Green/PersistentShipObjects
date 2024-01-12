@@ -12,6 +12,7 @@ namespace PersistentShipObjects {
     public class ShipBuildModeManagerPatch {
         internal ManualLogSource mls;
         void Awake() {
+            Debug.LogError("BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB");
             mls = PSOplugin.Instance.mls;
             mls.LogInfo("shipBuildModeManagerPatch is waking up");
             PSOplugin.Instance.harmony.PatchAll();
@@ -48,6 +49,7 @@ namespace PersistentShipObjects {
     public class SpawnUnlockablePatch {
         internal ManualLogSource mls;
         void Awake() {
+            Debug.LogError("CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCc");
             mls = PSOplugin.Instance.mls;
             mls.LogInfo("SpawnUnlockablePatch is waking up");
             PSOplugin.Instance.harmony.PatchAll();
@@ -68,6 +70,7 @@ namespace PersistentShipObjects {
     public class LoadShipGrabbableItemsPatch {
         internal ManualLogSource mls;
         void Awake() {
+            Debug.LogError("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd");
             mls = PSOplugin.Instance.mls;
             mls.LogInfo("LoadShipGrabbableItemsPatch is waking up");
             PSOplugin.Instance.harmony.PatchAll();
@@ -78,7 +81,7 @@ namespace PersistentShipObjects {
             int tfIndexInLocalVariablesIsHidingMyGotDangComponent = 0;
             var codes = new List<CodeInstruction>(instructions);
 
-
+            //
             /* ok bitch fucker, look at this shit in "Lethal Company\Lethal Company_Data\Managed\Assembly-CSharp.dll" StartOfRound.LoadShipGrabbableItems() (viewed with ILSpy, IL with C#):
 
             // GrabbableObject component = UnityEngine.Object.Instantiate(allItemsList.itemsList[array[i]].spawnPrefab, array2[i], Quaternion.identity, elevatorTransform).GetComponent<GrabbableObject>();
@@ -135,6 +138,8 @@ namespace PersistentShipObjects {
     }
 
 
+
+    [BepInPlugin("VivianGreen.PersistentShipObjects", "PersistentShipObjects", "0.0.6")]
     public class PSOplugin : BaseUnityPlugin {
         private const string modGUID = "VivianGreen.PersistentShipObjects";
         private const string modName = "PersistentShipObjects";
@@ -165,7 +170,8 @@ namespace PersistentShipObjects {
             }
         }
 
-        void Awake() {
+        private void Awake() {
+            print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAa");
             LoadFromManifest(); // get version #
 
             mls = BepInEx.Logging.Logger.CreateLogSource(modGUID);

@@ -1,7 +1,5 @@
 bin/*
 obj/*
-VivianGreen-PersistentShipObjects/PersistentShipObjects.dll
-VivianGreen-PersistentShipObjects/manifest.json
 
 **.bak
 *.cache

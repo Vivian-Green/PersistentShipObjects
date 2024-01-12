@@ -1,3 +1,6 @@
+## 0.0.5
+ - added post-build script for automatic exporting
+
 ## 0.0.3
  - added export script that only took 6hrs to write and.. actually I think that one was worth it pog
 
