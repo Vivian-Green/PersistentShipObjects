@@ -21,7 +21,7 @@ namespace PersistentShipObjects { // todo: do the objects move server-side?? lik
         public const string modName = "PersistentShipObjects";
         public const string modVersion = "0.0.7"; // todo: edit regex in export.py to match this
 
-        public static Config myConfig { get; internal set; }
+        public static PersistantShipObjectsConfig persistantShipObjectsConfig { get; internal set; }
 
         public System.Collections.Generic.Dictionary<string, VivsTrans> VivsTranses;
 
@@ -56,9 +56,9 @@ namespace PersistentShipObjects { // todo: do the objects move server-side?? lik
             if (Instance == null) {
                 Instance = this;
             }
-            myConfig = new Config(base.Config);
+            persistantShipObjectsConfig = new PersistantShipObjectsConfig(base.Config);
 
-            VivsTranses = Config.shipObjectVivTransforms.Value; // todo: this is either necessary (need to instantiate here if null - doubt) or will break things (overwrite old configs-), and I'm not 100% sure which, so I'm leaving it: ?? new Dictionary<String, VivsTrans> { { "testName", new VivsTrans(new Vector3(0, 0, 0), Quaternion.identity) } };
+            VivsTranses = PersistantShipObjectsConfig.shipObjectVivTransforms.Value; // todo: this is either necessary (need to instantiate here if null - doubt) or will break things (overwrite old configs-), and I'm not 100% sure which, so I'm leaving it: ?? new Dictionary<String, VivsTrans> { { "testName", new VivsTrans(new Vector3(0, 0, 0), Quaternion.identity) } };
         }
 
         public bool SaveObjTransform(string name, Transform trans) {
@@ -76,13 +76,9 @@ namespace PersistentShipObjects { // todo: do the objects move server-side?? lik
                     VivsTranses.Add(name, new VivsTrans(thisPos, thisRot));
                 }
 
-                // Save the configuration
-                //while (true) {
-                //    mls.LogInfo("lmao remove this");
-                //} // uncomment those
                 try {
-                    Config.shipObjectVivTransforms.Value = VivsTranses;
-                    Config.shipObjectVivTransforms.ConfigFile.Save();
+                    PersistantShipObjectsConfig.shipObjectVivTransforms.Value = VivsTranses;
+                    PersistantShipObjectsConfig.shipObjectVivTransforms.ConfigFile.Save();
                 } catch {
                     Debug.Log("FUCK!");
                 }

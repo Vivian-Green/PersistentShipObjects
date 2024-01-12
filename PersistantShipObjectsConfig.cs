@@ -4,10 +4,10 @@ using System.Collections.Generic;
 using UnityEngine;
 
 namespace PersistentShipObjects {
-    public class Config {
+    public class PersistantShipObjectsConfig {
         public static ConfigEntry<Dictionary<String, VivsTrans>> shipObjectVivTransforms;
 
-        public Config(ConfigFile cfg) {
+        public PersistantShipObjectsConfig(ConfigFile cfg) {
             shipObjectVivTransforms = cfg.Bind(
                 "General", // Config section
                 "shipObjectVivTransforms", // Key of this config
