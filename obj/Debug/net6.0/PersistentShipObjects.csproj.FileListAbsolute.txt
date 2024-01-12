@@ -105,7 +105,6 @@ C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\Unity.Timeline.dll
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\Unity.Services.Core.Internal.dll
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\Unity.Services.Core.dll
-C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\Newtonsoft.Json.dll
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\Unity.Profiling.Core.dll
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\0Harmony.xml
 C:\Users\acorb\Documents\GitHub\PersistentShipObjects\PersistentShipObjects\bin\Debug\net6.0\BepInEx.xml

@@ -1,6 +1,7 @@
 ﻿using BepInEx;
 using BepInEx.Logging;
 using HarmonyLib;
+using Newtonsoft.Json.Linq;
 using System.Reflection.Emit;
 using Unity.Netcode;
 using UnityEngine;
@@ -135,11 +136,11 @@ namespace PersistentShipObjects {
 
 
     public class PSOplugin : BaseUnityPlugin {
-        private const string modGUID = "VivianGreen.PersistantShipObjects";
+        private const string modGUID = "VivianGreen.PersistentShipObjects";
         private const string modName = "PersistentShipObjects";
-        private const string modVersion = "0.0.1";
+        private static string modVersion = "version string not (yet?) set";
 
-    public static Config myConfig { get; internal set; }
+        public static Config myConfig { get; internal set; }
 
         public Dictionary<string, VivsTrans>? VivsTranses;
 
@@ -150,7 +151,23 @@ namespace PersistentShipObjects {
 
         public bool safeInjection = true; // fucking.. it being false just makes the transpiling slightly slower- it's a load times thing lmao, definitely default to true
 
+        private static void LoadFromManifest() {
+            try {
+                // Read manifest.json
+                string manifestPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "VivianGreen-PersistentShipObjects", "manifest.json");
+                string manifestJson = File.ReadAllText(manifestPath);
+                JObject manifest = JObject.Parse(manifestJson);
+
+                // Retrieve value(s) from manifest.json
+                modVersion = (string)manifest["version_number"] ?? "err loading version number from manifest.json";
+            } catch (Exception ex) {
+                Console.WriteLine($"Error loading manifest.json: {ex.Message}");
+            }
+        }
+
         void Awake() {
+            LoadFromManifest(); // get version #
+
             mls = BepInEx.Logging.Logger.CreateLogSource(modGUID);
             mls.LogInfo("PSO says is waking up");
 
