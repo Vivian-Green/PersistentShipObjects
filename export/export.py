@@ -237,13 +237,13 @@ def confirmChangelog(changelog_texts):
 
     return changelog_texts
 
-def replace_version_in_plugin_cs(file_path, new_version):
+def replace_version_in_plugin_cs(file_path, new_version): # lemme assign this to a fukin function that reads manifest.json pls, I don't want to change this in 8 places
     with open(file_path, 'r') as file:
         content = file.read()
 
     # Use a regular expression to match and replace the version attribute
-    pattern = r'BepInPlugin\("VivianGreen.PersistentShipObjects", "PersistentShipObjects", "[0-9.]+"\)'
-    replacement = f'BepInPlugin("VivianGreen.PersistentShipObjects", "PersistentShipObjects", "{incrementVersion(new_version)}")' # set to 1 more than the current version to avoid making this be a prefix- lmao
+    pattern = r'public const string modVersion = "[0-9.]+"'
+    replacement = f'public const string modVersion = "{incrementVersion(new_version)}"' # set to 1 more than the current version to avoid making this be a prefix- lmao
     content = re.sub(pattern, replacement, content)
 
     with open(file_path, 'w') as file:

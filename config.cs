@@ -1,9 +1,11 @@
 ﻿using BepInEx.Configuration;
+using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace PersistentShipObjects {
     public class Config {
-        public static ConfigEntry<Dictionary<String, VivsTrans>>? shipObjectVivTransforms;
+        public static ConfigEntry<Dictionary<String, VivsTrans>> shipObjectVivTransforms;
 
         public Config(ConfigFile cfg) {
             shipObjectVivTransforms = cfg.Bind(

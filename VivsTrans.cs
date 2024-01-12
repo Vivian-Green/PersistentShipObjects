@@ -2,9 +2,9 @@
 
 namespace PersistentShipObjects {
     public class VivsTrans { // I actually needed this lmao
-        public Vector3 position = new(0, 0, 0);
+        public Vector3 position = new Vector3(0, 0, 0);
         public Quaternion rotation = Quaternion.identity;
-        public Vector3 scale = new(1, 1, 1);
+        public Vector3 scale = new Vector3(1, 1, 1);
 
         public VivsTrans() { }
 
