@@ -1,7 +1,6 @@
-*/bin/*
-*/obj/*
-*/VivianGreen-PersistentShipObjects/*
+bin/*
+obj/*
+VivianGreen-PersistentShipObjects/*
 
 **.bak
-*.cache
 *.cache
