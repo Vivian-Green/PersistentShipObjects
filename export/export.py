@@ -3,46 +3,54 @@ import json
 import shutil
 import zipfile
 
+# todo: SO MUCH fucking cleanup pls actually clean this up viv, someone might actually look at this one-
+#       if you are someone and this is still here - fuck, sorry
+#                                                                                                   -viv
+
+# todo: CONSTS ARE LOUD
 path = os.getcwd()
 rootFolder = os.path.abspath(os.path.join(path, os.pardir))
-export_folder_path = os.path.join(rootFolder, 'VivianGreen-PersistentShipObjects')
-thunderstore_mod_folder_path = os.path.join(os.path.expandvars('%appdata%'), 'Thunderstore Mod Manager', 'DataFolder', 'LethalCompany', 'profiles', 'emptyDev', 'BepInEx', 'plugins', 'VivianGreen-PersistentShipObjects')
+export_folder_path = os.path.join(rootFolder, "VivianGreen-PersistentShipObjects")
+thunderstore_mod_folder_path = os.path.join(
+    os.path.expandvars("%appdata%"), "Thunderstore Mod Manager", "DataFolder", "LethalCompany",
+    "profiles", "emptyDev", "BepInEx", "plugins", "VivianGreen-PersistentShipObjects"
+)
 
-manifest_path = os.path.join(rootFolder, 'manifest.json')
+manifest_path = os.path.join(rootFolder, "manifest.json")
 export_info_path = os.path.join(rootFolder, "export", "exportInfo.json")
-changelog_path = os.path.join(export_folder_path, 'changelog.md')
+changelog_path = os.path.join(export_folder_path, "changelog.md")
 
-VSDLLBuildPath = os.path.join(rootFolder, 'bin', 'Debug', 'net6.0', 'PersistentShipObjects.dll')
-
-
+VSDLLBuildPath = os.path.join(
+    rootFolder, "bin", "Debug", "net6.0", "PersistentShipObjects.dll"
+)
 
 
 def get_new_version(exportInfo):
-    version_parts = exportInfo["version_number"].split(".")
+    version_parts = exportInfo["version_number"].strip().split(".")
     patch_version = int(version_parts[2]) + 1
-    # print("get_new_version() patch_version: "+".".join(version_parts)) # I know.
     version_parts[2] = str(patch_version)
     new_version = ".".join(version_parts)
-    # print("get_new_version() new_version: "+new_version)
     return new_version
 
+
 def update_json_file(file_path, version):
-    print("update_json_file() version: "+version)
-    with open(file_path, 'r') as file:
+    with open(file_path, "r") as file:
         data = json.load(file)
         data["version_number"] = version
 
-    with open(file_path, 'w') as file:
+    with open(file_path, "w") as file:
         json.dump(data, file, indent=2)
+
 
 def copy_files(source, destination):
     shutil.copy(source, destination)
-    print("copied "+source+" to "+destination)
+    print("copied " + source + " to " + destination)
 
 
-def read_changelog(changelog_path):
-    with open(changelog_path, 'r') as file:
+def read_file(file_path):
+    with open(changelog_path, "r") as file:
         return file.read()
+
 
 def find_non_default_index(changelogs):
     for i, changelog in enumerate(changelogs):
@@ -51,65 +59,60 @@ def find_non_default_index(changelogs):
     return None
 
 
-def update_changelog_file(changelog_path, flattened_changelogs):
-    with open(changelog_path, 'w') as file:
-        file.write("".join(["## " + changelog for changelog in flattened_changelogs]))
-
-
-def update_changelog(changelog_path, texts, version):
-    with open(changelog_path, 'r') as file:
-        current_content = file.read()
-
-    changelogs = current_content.split("## ")[1:]
+def update_changelog(changelog_path, changelogsStr, version):
+    changelogs = changelogsStr.split("## ")[1:]
 
     non_default_index = find_non_default_index(changelogs)
 
-    if non_default_index is not None:
-        flattened_changelogs = changelogs[non_default_index:]
+    if non_default_index is None:
+        with open(changelog_path, "w") as file:
+            file.write(f"{changelogsStr}")
 
-        with open(changelog_path, 'w') as file:
-            file.write("".join(["## " + changelog for changelog in flattened_changelogs]))
-
-        # Get the new version of the most recent patch note
-        actual_version = getNewestVersionFromChangelog(flattened_changelogs)
-
-        # Update exportInfo.json's version_number to the new version
-        update_json_file(export_info_path, actual_version)
-
-        return actual_version
-    else:
-        with open(changelog_path, 'w') as file:
-            file.write(f"{texts}")
-
-        # If no non-default changelog, use the original version
         return version
 
-def getNewestVersionFromChangelog(changelogs):
-    # print(changelogs)
-    # Extract the version number from the changelog
-    version_line = changelogs[0].split(' ')[0]
-    actual_version = version_line
+    flattened_changelogs = changelogs[non_default_index:]
+    flattenedChangelogsString = "## " + "## ".join(flattened_changelogs)
+
+    with open(changelog_path, "w") as file:
+        file.write(flattenedChangelogsString)
+
+    actual_version = getNewestVersionFromChangelog(
+        flattened_changelogs
+    )  # Gets the version of the most recent non-empty patch note
+    update_json_file(export_info_path, actual_version)
+
     return actual_version
 
+
+def getNewestVersionFromChangelog(changelogs):
+    version_line = changelogs[0].split(" ")
+    actual_version = version_line[0].strip()
+    return actual_version
+
+
 def get_changelog_texts(changelog_path, version):
-    print(f"Enter changelog text for version {version} (type ! on a new line to finish):")
+    print(
+        f"Enter changelog text for version {version} (type ! on a new line to finish):"
+    )
 
     bullet_texts = []
     while True:
         user_input = input().strip()
-        if user_input == '!':
+        if user_input == "!":
             break
         bullet_texts.append(user_input)
 
     if not bullet_texts:
         bullet_texts = ["no changes provided"]
 
-    new_changelog_texts = f"\n## {version}\n" + ''.join([f" - {text}\n" for text in bullet_texts])# + "\n"
-    # print(new_changelog_texts)
-    with open(changelog_path, 'r') as file:
-        content = file.read()
+    new_changelog_texts = (
+        f"\n## {version}\n" + "".join([f" - {text}\n" for text in bullet_texts]) + "\n"
+    )
+
+    content = read_file(changelog_path)
 
     return f"{new_changelog_texts}{content}"
+
 
 def delete_bak_files(folder_path):
     try:
@@ -122,9 +125,10 @@ def delete_bak_files(folder_path):
     except Exception as e:
         print(f"Error deleting .bak files: {e}")
 
+
 def create_zip(source_folder, output_zip):
     try:
-        with zipfile.ZipFile(output_zip, 'w') as zipf:
+        with zipfile.ZipFile(output_zip, "w") as zipf:
             for root, dirs, files in os.walk(source_folder):
                 for file in files:
                     file_path = os.path.join(root, file)
@@ -134,6 +138,7 @@ def create_zip(source_folder, output_zip):
     except Exception as e:
         print(f"Error creating zip file: {e}")
 
+
 def undo_last_change(changelog_texts):
     if len(changelog_texts) >= 3:
         # Remove the last version changelog
@@ -142,32 +147,37 @@ def undo_last_change(changelog_texts):
         print("Cannot undo further. No changes to undo.")
     return changelog_texts
 
+
 def merge_changelogs(changelog_texts):
     if len(changelog_texts) >= 2:
-        merged_changelog = f"\n## {changelog_texts[0]}\n" + ''.join([f" - {text}\n" for text in changelog_texts[1:]])
+        merged_changelog = f"\n## {changelog_texts[0]}\n" + "".join(
+            [f" - {text}\n" for text in changelog_texts[1:]]
+        )
         changelog_texts = [merged_changelog]
     else:
         print("Cannot merge further. Not enough changelogs available.")
     return changelog_texts
 
+
 def merge_specific_changelog(changelog_texts, merge_index):
     if 0 < merge_index <= len(changelog_texts):
-        merged_changelog = changelog_texts[merge_index - 1] + changelog_texts[merge_index]
+        merged_changelog = (
+            changelog_texts[merge_index - 1] + changelog_texts[merge_index]
+        )
         changelog_texts[merge_index - 1] = merged_changelog
         # Remove the merged changelog
         changelog_texts.pop(merge_index)
     else:
-        print(f"Invalid index. Please provide a number between 1 and {len(changelog_texts)}.")
+        print(
+            f"Invalid index. Please provide a number between 1 and {len(changelog_texts)}."
+        )
     return changelog_texts
 
-def preview_changelog(changelog_texts):
-    print("Changelog Preview:")
-    print(changelog_texts)
-    #print(f"\n## {changelog_texts[0]}\n" + ''.join([f" - {text}\n" for text in changelog_texts[1:]]))
 
 def confirmChangelog(changelog_texts):
     while True:
-        preview_changelog(changelog_texts)
+        print("Changelog Preview:")
+        print(changelog_texts)
 
         print("\n   Options:")
         print("     1. Confirm changelog")
@@ -179,26 +189,29 @@ def confirmChangelog(changelog_texts):
 
         # todo: switch to cases
 
-        if user_input == '1':
+        if user_input == "1":
             break  # Continue as normal
-        elif user_input == '2':
+        elif user_input == "2":
             changelog_texts = undo_last_change(changelog_texts)
-        elif user_input.startswith('3'):
+        elif user_input.startswith("3"):
             changelog_texts = merge_changelogs(changelog_texts)
-        elif user_input.startswith('4'):
+        elif user_input.startswith("4"):
             try:
                 merge_index = int(user_input.split()[1])
                 changelog_texts = merge_specific_changelog(changelog_texts, merge_index)
             except (ValueError, IndexError):
-                print("Invalid input for merge command. Please use 'm/merge <0 < int <= the number of changelogs>'.")
+                print(
+                    "Invalid input for merge command. Please use 'm/merge <0 < int <= the number of changelogs>'."
+                )
         else:
             print("Invalid input. Please choose a valid option.")
 
     return changelog_texts
 
+
 def main():
     # Read exportInfo
-    with open(export_info_path, 'r') as exportConfig:
+    with open(export_info_path, "r") as exportConfig:
         exportInfo = json.load(exportConfig)
 
     new_version = get_new_version(exportInfo)
@@ -208,7 +221,7 @@ def main():
     new_version = update_changelog(changelog_path, new_changelog_texts, new_version)
 
     # changelog validation & updating
-    update_changelog_file(changelog_path, confirmChangelog(new_changelog_texts))
+    confirmChangelog(new_changelog_texts)
 
     # todo: start timer here
 
@@ -226,10 +239,11 @@ def main():
     # cleanup & export
     delete_bak_files(export_folder_path)
 
-    zip_filename = os.path.join(rootFolder, 'VivianGreen-PersistentShipObjects.zip')
+    zip_filename = os.path.join(rootFolder, "VivianGreen-PersistentShipObjects.zip")
     create_zip(export_folder_path, zip_filename)
 
-    print("\n\n\n exported in "+"todo: put timer here"+"s")
+    print("\n\n\n exported in " + "todo: put timer here" + "s")
+
 
 if __name__ == "__main__":
     main()
