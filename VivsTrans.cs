@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿/*using UnityEngine;
 
 namespace PersistentShipObjects {
     public class VivsTrans { // I actually needed this lmao
@@ -26,4 +26,4 @@ namespace PersistentShipObjects {
             return trans;
         }
     }
-}
+}*/

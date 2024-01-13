@@ -1,5 +1,14 @@
+## 0.0.7
+ - rewrote most of the base plugin
+ - extracted* patches to patches folder *just ShipBuildModeManagerPatch.cs
+ - rewrote most of the code to fetch placeableShipObjects' transforms
+ - removed transform wrapper class
+ - fixed another typo- they're very persistant
+
 ## 0.0.6
- - moved to .net core 2.1 with many headaches
+ - moved to netstandard 2.1 with many headaches
+ - removed config's old usage bc that isn't going to work
+ - like half the code is commented out but it runs now? Like it doesn't work but it runs
 
 ## 0.0.5
  - added post-build script for automatic exporting

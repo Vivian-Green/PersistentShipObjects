@@ -18,14 +18,14 @@ thunderstore_mod_folder_path = os.path.join(
     "profiles", "emptyDev", "BepInEx", "plugins", "VivianGreen-PersistentShipObjects"
 )
 repository_folder_path = os.path.join(os.path.expandvars("%USERPROFILE%"), "Documents", "GitHub", "PersistentShipObjects", "PersistentShipObjects")
-plugin_cs_path = os.path.join(repository_folder_path, "plugin.cs")
+plugin_cs_path = os.path.join(repository_folder_path, "PersistentShipObjects.cs")
 
 manifest_path = os.path.join(rootFolder, "manifest.json")
 export_info_path = os.path.join(rootFolder, "export", "exportInfo.json")
 changelog_path = os.path.join(export_folder_path, "changelog.md")
 
 VSDLLBuildPath = os.path.join(
-    rootFolder, "bin", "Debug", "net6.0", "PersistentShipObjects.dll"
+    rootFolder, "bin", "Debug", "netstandard2.1", "PersistentShipObjects.dll"
 )
 
 
