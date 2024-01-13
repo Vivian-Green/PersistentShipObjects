@@ -54,7 +54,8 @@ namespace PersistentShipObjects.Patches {
                     if (placeableShipObj.transform != null) {
                         Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableShipObj.GetType() + " named " + actualItemName + " at pos " + newPosition);
 
-                        PersistentShipObjects.SaveObjTransform(actualItemName, PersistentShipObjects.PosAndRotAsTransform(newPosition, Quaternion.Euler(newRotation)));
+                        Transform newTrans = PersistentShipObjects.PosAndRotAsTransform(newPosition, Quaternion.Euler(newRotation));
+                        PersistentShipObjects.SaveObjTransform(actualItemName, ref newTrans);
                     } else {
                         Debug.LogError("ShipBuildModeManagerPatch: Transform is null");
                     }

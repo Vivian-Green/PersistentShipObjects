@@ -89,12 +89,19 @@ namespace PersistentShipObjects {
             //ShipConfig = new Config(Config);
         }
 
-        public static bool SaveObjTransform(string name, Transform trans) {
-            //return true;
-
+        public static bool SaveObjTransform(string name, ref Transform trans) {
             mls.LogWarning("saving trans of obj named: " + name);
-            //try {
-                // Set if exists, else add
+
+            if (!RoundManager.Instance.NetworkManager.IsHost) {
+                Debug.LogWarning("something was moved, but this isn't my ship! So I'll just pretend I didn't see that.");
+                return false;
+            }
+            if (trans == null) {
+                Debug.LogWarning("received transform is null!");
+                return false;
+            }
+
+            try {
                 // exists ? set : add
 
                 if (ObjTransforms.ContainsKey(name)) {
@@ -110,7 +117,7 @@ namespace PersistentShipObjects {
                     mls.LogInfo("FUCK!");
                 }//*/
 
-            /*} catch (Exception ex) {
+            } catch (Exception ex) {
                 // Log the exception and return false
                 mls.LogError("Error saving placeable ship object transform: " + ex.Message);
                 return false;

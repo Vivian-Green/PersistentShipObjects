@@ -1,3 +1,7 @@
+## 0.0.8
+ - Saved placeableShipObject transforms are now actually loaded! Sometimes!
+ - see known bugs list in README.md
+
 ## 0.0.7
  - rewrote most of the base plugin
  - extracted* patches to patches folder *just ShipBuildModeManagerPatch.cs
