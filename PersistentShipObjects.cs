@@ -13,10 +13,17 @@ using UnityEngine;
 using UnityEngine.Rendering;
 
 
+// todo: ask chatgpt for this lmao
 
+// todo: launch game in post-build
+//  add todo highlighting to vs bc gd
+//  commit to github (continuous-) in post-build
+//  copy manifest.json and README.md, fuck it, CHANGELOG.md too, from root
 
-// todo: ConfigEntry cannot be dict
-// for now uh... persistence is just uhhhh... after dying- lmao
+//  check if lethal company is running, & close it, in post-build (python or batch? whichever is easier-)
+
+// fucking get the last edit date of the dll before copying, since apparently it doesn't fucking feel like it
+// also fucking delete copied dlls after copying, and copying-to dlls before copying.
 
 
 
@@ -30,7 +37,7 @@ namespace PersistentShipObjects {
 
         private const string GUID = "VivianGreen.PersistentShipObjects";
         private const string NAME = "PersistentShipObjects";
-        private const string VERSION = "0.0.9";
+        private const string VERSION = "0.1.0";
 
         private readonly Harmony harmony = new Harmony(GUID);
         public static PersistentShipObjects instance;
@@ -46,16 +53,16 @@ namespace PersistentShipObjects {
 
 
         public void Awake() {
-            mls = Logger; 
-            mls.LogInfo("PersistentShipObjects instantiated!");
+            mls = Logger;
+            mls.LogWarning("PersistentShipObjects instantiated!");
 
             ObjTransforms = new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
 
-            mls.LogInfo("AA");
+            mls.LogWarning("AA");
             if (instance == null) {
                 instance = this;
             }
-            mls.LogInfo("AAAA");
+            mls.LogWarning("AAAA");
 
 
             /*ShipObjectTransforms = Config.Bind(
@@ -66,13 +73,13 @@ namespace PersistentShipObjects {
             );//*/
             //Config.Save();
 
-            mls.LogInfo("Configuration Initialized.");
+            mls.LogWarning("Configuration Initialized.");
             //Harmony.CreateAndPatchAll(GetType().Assembly);
 
             Harmony.CreateAndPatchAll(typeof(ShipBuildModeManagerPatch));
-            mls.LogInfo("ShipBuildModeManager patched.");
+            mls.LogWarning("ShipBuildModeManager patched.");
 
-            mls.LogInfo("PersistentShipObjects: harmony.PatchAll() DIDN'T immediately crash!");
+            mls.LogWarning("PersistentShipObjects: harmony.PatchAll() DIDN'T immediately crash!");
 
             /*var types = Assembly.GetExecutingAssembly().GetTypes();
             foreach (var type in types) {
@@ -89,9 +96,10 @@ namespace PersistentShipObjects {
             //ShipConfig = new Config(Config);
         }
 
-        public static bool SaveObjTransform(string name, ref Transform trans) {
+        public static bool SaveObjTransform(string name, Transform trans) {
             mls.LogWarning("saving trans of obj named: " + name);
 
+            mls.LogWarning("about to check if is host-");
             if (!RoundManager.Instance.NetworkManager.IsHost) {
                 Debug.LogWarning("something was moved, but this isn't my ship! So I'll just pretend I didn't see that.");
                 return false;
@@ -114,7 +122,7 @@ namespace PersistentShipObjects {
                     ShipObjectTransforms.Value = ObjTransforms;
                     ShipObjectTransforms.ConfigFile.Save();
                 } catch {
-                    mls.LogInfo("FUCK!");
+                    mls.LogWarning("FUCK!");
                 }//*/
 
             } catch (Exception ex) {
@@ -122,6 +130,7 @@ namespace PersistentShipObjects {
                 mls.LogError("Error saving placeable ship object transform: " + ex.Message);
                 return false;
             }//*/
+            mls.LogWarning("saved obj trans!");
             return true;
         }
 
@@ -178,14 +187,14 @@ public class LoadShipGrabbableItemsPatch {
         where tf to look to find that index in the future.
         //*//*
 
-        mls.LogInfo("this motherfucker is straight TRANSpiling which is poggies");
+        mls.LogWarning("this motherfucker is straight TRANSpiling which is poggies");
         for (int i = 0; i < codes.Count; i++) {
-            mls.LogInfo(codes[i].ExtractLabels());
+            mls.LogWarning(codes[i].ExtractLabels());
 
             if (!(codes[i].opcode == OpCodes.Callvirt && codes[i].operand.ToString().Contains("Spawn"))) continue;
             // just before component.NetworkObject.Spawn();
 
-            mls.LogInfo("yo bitch fucker, i is "+i+" when shit gets insertamalated, we injecting UpdateGrabbableObjTrans() over here at "+i+" fr fr");
+            mls.LogWarning("yo bitch fucker, i is "+i+" when shit gets insertamalated, we injecting UpdateGrabbableObjTrans() over here at "+i+" fr fr");
             codes.Insert(i, 
                 new CodeInstruction(
                     OpCodes.Ldloc_S, // load to stack from local variable at index of
@@ -207,7 +216,7 @@ public class LoadShipGrabbableItemsPatch {
     }
 
     public static void UpdateGrabbableObjTrans(GrabbableObject component) {
-        mls.LogInfo("ayo this fucker just got injected lmao, also " + component.name + " says go fuck yourself");
+        mls.LogWarning("ayo this fucker just got injected lmao, also " + component.name + " says go fuck yourself");
 
         // todo: check if this name of obj has like, been moved already?
         if (PersistentShipObjects.instance.VivsTranses.ContainsKey(component.name)) { // if name in config, overwrite trans

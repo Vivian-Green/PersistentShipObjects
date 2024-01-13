@@ -1,3 +1,18 @@
+## 0.1.2
+ - some cleanup, small tweaks
+
+## 0.1.1
+ - actually added the updated readme- whoops. This needs a unique version number for thunderstore
+
+## 0.1.0
+ - fixed a bug where placeableShipObject positions weren't reloaded properly until relaunching lethal company
+ - fixed a bug where the player could get stuck in in build mode after moving a placeableShipObject, leaving a game without relaunching lethal company, and joining another game
+ - saved transforms are now relative to the ship, which should be much more consistent
+ - still very early stages, so there's a lot of debug prints-
+
+## 0.0.9
+ - edited export.py to give correct version number in the dll
+
 ## 0.0.8
  - Saved placeableShipObject transforms are now actually loaded! Sometimes!
  - see known bugs list in README.md
