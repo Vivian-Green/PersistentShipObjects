@@ -242,8 +242,8 @@ def replace_version_in_plugin_cs(file_path, new_version): # lemme assign this to
         content = file.read()
 
     # Use a regular expression to match and replace the version attribute
-    pattern = r'public const string modVersion = "[0-9.]+"'
-    replacement = f'public const string modVersion = "{incrementVersion(new_version)}"' # set to 1 more than the current version to avoid making this be a prefix- lmao
+    pattern = r'public const string VERSION = "[0-9.]+"'
+    replacement = f'public const string VERSION = "{incrementVersion(new_version)}"' # set to 1 more than the current version to avoid making this be a prefix- lmao
     content = re.sub(pattern, replacement, content)
 
     with open(file_path, 'w') as file:

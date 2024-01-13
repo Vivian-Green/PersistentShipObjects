@@ -30,7 +30,7 @@ namespace PersistentShipObjects {
 
         private const string GUID = "VivianGreen.PersistentShipObjects";
         private const string NAME = "PersistentShipObjects";
-        private const string VERSION = "0.0.7";
+        private const string VERSION = "0.0.9";
 
         private readonly Harmony harmony = new Harmony(GUID);
         public static PersistentShipObjects instance;
