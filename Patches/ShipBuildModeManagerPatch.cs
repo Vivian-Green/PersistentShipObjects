@@ -18,57 +18,68 @@ namespace PersistentShipObjects.Patches {
             Debug.Log("ShipBuildModeManagerPatch starting up");
         }
 
+        /*static void PrintChildrenNames(Transform parent, int depth) {
+            String indent = "";
+            String tab = "  ";
+            for (int i = 0; i < depth + 1; i++) {
+                indent += tab;
+            }
+
+            Debug.Log("E" + indent + "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
+            Debug.Log(parent.childCount);
+
+            foreach (Transform child in parent) {
+                // Print the name of the child
+
+                Debug.Log(indent + "Child: " + child.name);
+
+                // If the child has further children, recursively call the function
+                if (child.childCount > 0) {
+                    PrintChildrenNames(child, depth + 1);
+                }
+            }
+        }*/
+
         [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObjectClientRpc")]
         [HarmonyPostfix]
         public static void PlaceShipObjectClientRpc(Vector3 newPosition, Vector3 newRotation, NetworkObjectReference objectRef) {
-            //Debug.Log("A");
-
-            if (1 == 1) {//RoundManager.Instance.NetworkManager.IsHost) {
-                //Debug.Log("A1");
-
-                static void PrintChildrenNames(Transform parent, int depth) {
-                    String indent = "";
-                    String tab = "  ";
-                    for (int i = 0; i < depth + 1; i++) {
-                        indent += tab;
-                    }
-
-                    Debug.Log("E" + indent + "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE");
-                    Debug.Log(parent.childCount);
-
-                    foreach (Transform child in parent) {
-                        // Print the name of the child
-
-                        Debug.Log(indent + "Child: " + child.name);
-
-                        // If the child has further children, recursively call the function
-                        if (child.childCount > 0) {
-                            PrintChildrenNames(child, depth + 1);
-                        }
-                    }
-                }
-
-                NetworkObject netObj;
-                objectRef.TryGet(out netObj);
+            if (1 == 1) { //RoundManager.Instance.NetworkManager.IsHost) {
+                objectRef.TryGet(out NetworkObject netObj);
 
                 PlaceableShipObject placeableShipObj = netObj.GetComponentInChildren<PlaceableShipObject>();
 
-                PrintChildrenNames(placeableShipObj.transform, 0);//*/
-
                 if (placeableShipObj != null) {
-                    String actualItemName = (placeableShipObj.transform.parent.gameObject)?.name;
-                    //Debug.Log("A1a1");
+                    String actualItemName = (placeableShipObj.transform.parent?.gameObject)?.name;
 
-                    Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableShipObj.GetType() + " named " + actualItemName + " at pos " + newPosition);
+                    if (placeableShipObj.transform != null) {
+                        Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableShipObj.GetType() + " named " + actualItemName + " at pos " + newPosition);
 
-
-                    PersistentShipObjects.SaveObjTransform(actualItemName, PersistentShipObjects.PosAndRotAsTransform(newPosition, Quaternion.Euler(newRotation)));
+                        PersistentShipObjects.SaveObjTransform(actualItemName, PersistentShipObjects.PosAndRotAsTransform(newPosition, Quaternion.Euler(newRotation)));
+                    } else {
+                        Debug.LogError("ShipBuildModeManagerPatch: Transform is null");
+                    }
                 } else {
-                    Debug.Log("ShipBuildModeManagerPatch: A1b1 - this shouldn't print");
+                    Debug.Log("ShipBuildModeManagerPatch: placeableShipObj is null");
                 }
             } else {
-                Debug.Log("A2");
-                Debug.LogError("ShipBuildModeManagerPatch: Not the host client");
+                Debug.Log("ShipBuildModeManagerPatch: Not the host client");
+            }
+        }
+
+
+        [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObject")]
+        [HarmonyPrefix]
+        public static void PlaceShipObject(ref Vector3 placementPosition, ref Vector3 placementRotation, PlaceableShipObject placeableObject) {
+            if (placeableObject.transform == null) {
+                Debug.Log("placeableObject.transform is null!");
+            } else {
+                String actualItemName = (placeableObject.transform.parent.gameObject)?.name;
+
+                if (actualItemName != null && (PersistentShipObjects.ObjTransforms?.ContainsKey(actualItemName) ?? false)) { // if name in config
+                    Transform newTrans = PersistentShipObjects.ObjTransforms[actualItemName];
+                    placementPosition = newTrans.position;
+                    placementRotation = newTrans.rotation.eulerAngles;
+                }
             }
         }
     }
