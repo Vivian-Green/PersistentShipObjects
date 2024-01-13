@@ -21,10 +21,10 @@ namespace PersistentShipObjects.Patches {
         [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObjectClientRpc")]
         [HarmonyPostfix]
         public static void PlaceShipObjectClientRpc(Vector3 newPosition, Vector3 newRotation, NetworkObjectReference objectRef) {
-            Debug.Log("A");
+            //Debug.Log("A");
 
             if (1 == 1) {//RoundManager.Instance.NetworkManager.IsHost) {
-                Debug.Log("A1");
+                //Debug.Log("A1");
 
                 static void PrintChildrenNames(Transform parent, int depth) {
                     String indent = "";
@@ -55,22 +55,16 @@ namespace PersistentShipObjects.Patches {
 
                 PrintChildrenNames(placeableShipObj.transform, 0);//*/
 
-                Debug.Log("CCCC");
-
                 if (placeableShipObj != null) {
                     String actualItemName = (placeableShipObj.transform.parent.gameObject)?.name;
-                    Debug.Log("A1a1");
+                    //Debug.Log("A1a1");
 
                     Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableShipObj.GetType() + " named " + actualItemName + " at pos " + newPosition);
 
-                    Debug.Log("A1a2");
 
                     PersistentShipObjects.SaveObjTransform(actualItemName, PersistentShipObjects.PosAndRotAsTransform(newPosition, Quaternion.Euler(newRotation)));
-
-                    Debug.Log("A1a3");
-
                 } else {
-                    Debug.Log("A1b1");
+                    Debug.Log("ShipBuildModeManagerPatch: A1b1 - this shouldn't print");
                 }
             } else {
                 Debug.Log("A2");
