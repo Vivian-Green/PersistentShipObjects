@@ -29,11 +29,10 @@ using UnityEngine.Rendering;
 
 
 namespace PersistentShipObjects {
-    //[BepInDependency("evaisa.lethallib", "0.12.1")]
-
+    [BepInDependency("evaisa.lethallib", "0.12.1")]
     [BepInPlugin(GUID, NAME, VERSION)]
     public class PersistentShipObjects : BaseUnityPlugin {
-        public static ManualLogSource mls { get; private set; }
+        public static ManualLogSource MLS { get; private set; }
 
         private const string GUID = "VivianGreen.PersistentShipObjects";
         private const string NAME = "PersistentShipObjects";
@@ -42,126 +41,115 @@ namespace PersistentShipObjects {
         private readonly Harmony harmony = new Harmony(GUID);
         public static PersistentShipObjects instance;
 
-        //public static GameObject ShipPrefab;
-        //public static GameObject ShipNetworkerPrefab;
-        //public static TerminalNode ShipFile;
-
         public static Dictionary<string, Transform> ObjTransforms;
-        //public static Config ShipConfig;
+        public static ConfigEntry<bool> doDebugPrints;
 
-        //public static ConfigEntry<Dictionary<string, Transform>> ShipObjectTransforms;
 
 
         public void Awake() {
-            mls = Logger;
-            mls.LogWarning("PersistentShipObjects instantiated!");
+            MLS = Logger;
+            MLS.LogInfo("PersistentShipObjects instantiated!");
 
             ObjTransforms = new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
 
-            mls.LogWarning("AA");
             if (instance == null) {
                 instance = this;
             }
-            mls.LogWarning("AAAA");
 
-
-            /*ShipObjectTransforms = Config.Bind(
-                "General",
-                "shipObjectTransforms",
-                new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } },
-                "Object transforms configuration"
+            doDebugPrints = Config.Bind(
+                "Debug",
+                "doDebugPrints",
+                false,
+                "should PersistentShipObjects paint the console yellow?"
             );//*/
             //Config.Save();
 
-            mls.LogWarning("Configuration Initialized.");
-            //Harmony.CreateAndPatchAll(GetType().Assembly);
-
             Harmony.CreateAndPatchAll(typeof(ShipBuildModeManagerPatch));
-            mls.LogWarning("ShipBuildModeManager patched.");
-
-            mls.LogWarning("PersistentShipObjects: harmony.PatchAll() DIDN'T immediately crash!");
-
-            /*var types = Assembly.GetExecutingAssembly().GetTypes();
-            foreach (var type in types) {
-                var methods = type.GetMethods(BindingFlags.NonPublic | BindingFlags.Instance | BindingFlags.Static);
-                foreach (var method in methods) {
-                    var attributes = method.GetCustomAttributes(typeof(RuntimeInitializeOnLoadMethodAttribute), false);
-                    if (attributes.Length > 0) {
-                        method.Invoke(null, null);
-                    }
-                }
-            }*/
-
-            // Handle configs
-            //ShipConfig = new Config(Config);
         }
 
-        public static bool SaveObjTransform(string name, Transform trans) {
-            mls.LogWarning("saving trans of obj named: " + name);
 
-            mls.LogWarning("about to check if is host-");
+        public static bool SaveObjTransform(string name, Transform trans) {
+            DebugLog("saving trans of obj named: " + name, 'i');
+
+            DebugLog("about to check if is host-", 'i');
             if (!RoundManager.Instance.NetworkManager.IsHost) {
-                Debug.LogWarning("something was moved, but this isn't my ship! So I'll just pretend I didn't see that.");
+                MLS.LogInfo("something was moved, but this isn't my ship! So I'll just pretend I didn't see that.");
                 return false;
             }
             if (trans == null) {
-                Debug.LogWarning("received transform is null!");
+                MLS.LogWarning("SaveObjTransform: received transform is null!");
                 return false;
             }
 
-            try {
-                // exists ? set : add
+            // ContainsKey ? set : add
+            if (ObjTransforms.ContainsKey(name)) {
+                ObjTransforms[name] = PosAndRotAsTransform(trans.position, trans.rotation);
+            } else {
+                ObjTransforms.Add(name, PosAndRotAsTransform(trans.position, trans.rotation));
+            }
 
-                if (ObjTransforms.ContainsKey(name)) {
-                    ObjTransforms[name] = PosAndRotAsTransform(trans.position, trans.rotation);
-                } else {
-                    ObjTransforms.Add(name, PosAndRotAsTransform(trans.position, trans.rotation));
-                }
-
-                /*try {
-                    ShipObjectTransforms.Value = ObjTransforms;
-                    ShipObjectTransforms.ConfigFile.Save();
-                } catch {
-                    mls.LogWarning("FUCK!");
-                }//*/
-
-            } catch (Exception ex) {
-                // Log the exception and return false
-                mls.LogError("Error saving placeable ship object transform: " + ex.Message);
-                return false;
-            }//*/
-            mls.LogWarning("saved obj trans!");
+            DebugLog("saved object transform!", 'i');
             return true;
         }
 
+
         public static Transform PosAndRotAsTransform(Vector3 position, Quaternion rotation) {
             GameObject go = new GameObject("transformHolder");
-            if (go == null) {
-                Debug.LogError("Failed to create GameObject");
-                return null;
-            }
-
             Transform trans = go.transform;
-            if (trans == null) {
-                Debug.LogError("Failed to get transform");
-                return null; // or handle the failure appropriately
-            }
-
 
             trans.position = position;
             trans.rotation = rotation;
             trans.localScale = Vector3.one;
             return trans;
         }
+
+
+        public static void DebugLog(System.Object logMessage, char logType = 'i') {
+            if (doDebugPrints.Value != true) return; // todo: is this truthy or boolean- how does C# work again lmao. does !doDebugPrints.Value give left or right:
+                                                         // true: true                  true: true
+                                                         // false: false                false: true
+                                                         // null: false                 null: false
+            String LogString = logMessage.ToString();
+
+            switch (logType) {
+                case 'w':
+                    MLS.LogWarning("PersistentShipObjects: " + LogString);
+                    break;
+                case 'm':
+                    MLS.LogMessage("PersistentShipObjects: " + LogString);
+                    break;
+                case 'e':
+                    MLS.LogError("PersistentShipObjects: " + LogString);
+                    break;
+                case 'i':
+                    MLS.LogInfo("PersistentShipObjects: " + LogString);
+                    break;
+                default:
+                    MLS.LogWarning("DebugLogger received an invalid log type, but here's whatever this is:");
+                    DebugLog("    " + LogString, 'w');
+                    break;
+            }
+        }
+
     }
 }
+
+
+
+
+
+
+
+
+// todo: dumpster dive through this hot garbage and see if anything is worth keeping
+
 /*
 public class LoadShipGrabbableItemsPatch {
-    internal ManualLogSource mls;
+    internal ManualLogSource MLS;
     void Awake() {
-        mls.LogInfoError("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd");
-        mls = PersistentShipObjects.instance.mls;
-        mls.LogInfoInfo("LoadShipGrabbableItemsPatch is waking up");
+        MLS.LogInfoError("DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDdd");
+        MLS = PersistentShipObjects.instance.MLS;
+        MLS.LogInfoInfo("LoadShipGrabbableItemsPatch is waking up");
         PersistentShipObjects.instance.harmony.PatchAll();
     }
 
@@ -187,14 +175,14 @@ public class LoadShipGrabbableItemsPatch {
         where tf to look to find that index in the future.
         //*//*
 
-        mls.LogWarning("this motherfucker is straight TRANSpiling which is poggies");
+        DebugLog("this motherfucker is straight TRANSpiling which is poggies");
         for (int i = 0; i < codes.Count; i++) {
-            mls.LogWarning(codes[i].ExtractLabels());
+            DebugLog(codes[i].ExtractLabels());
 
             if (!(codes[i].opcode == OpCodes.Callvirt && codes[i].operand.ToString().Contains("Spawn"))) continue;
             // just before component.NetworkObject.Spawn();
 
-            mls.LogWarning("yo bitch fucker, i is "+i+" when shit gets insertamalated, we injecting UpdateGrabbableObjTrans() over here at "+i+" fr fr");
+            DebugLog("yo bitch fucker, i is "+i+" when shit gets insertamalated, we injecting UpdateGrabbableObjTrans() over here at "+i+" fr fr");
             codes.Insert(i, 
                 new CodeInstruction(
                     OpCodes.Ldloc_S, // load to stack from local variable at index of
@@ -216,7 +204,7 @@ public class LoadShipGrabbableItemsPatch {
     }
 
     public static void UpdateGrabbableObjTrans(GrabbableObject component) {
-        mls.LogWarning("ayo this fucker just got injected lmao, also " + component.name + " says go fuck yourself");
+        DebugLog("ayo this fucker just got injected lmao, also " + component.name + " says go fuck yourself");
 
         // todo: check if this name of obj has like, been moved already?
         if (PersistentShipObjects.instance.VivsTranses.ContainsKey(component.name)) { // if name in config, overwrite trans
