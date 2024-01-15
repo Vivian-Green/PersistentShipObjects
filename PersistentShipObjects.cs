@@ -2,16 +2,10 @@
 using BepInEx.Configuration;
 using BepInEx.Logging;
 using HarmonyLib;
-using HarmonyLib.Tools;
 using PersistentShipObjects.Patches;
 using System;
-using System.Linq;
 using System.Collections.Generic;
-using System.Reflection;
-using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Rendering;
-using Newtonsoft.Json;
 using System.Threading.Tasks;
 
 
@@ -56,58 +50,16 @@ namespace PersistentShipObjects {
 
 
 
-        public static void SaveToJson(string jsonPath, object saveableThing) {
-            if (saveIsCached || LastSavedObjTransforms == ObjTransforms) return;
-
-            saveIsCached = true;
-
-            TimeSpan timeSinceLastSave = DateTime.Now - lastSaveTime;
-
-            if (timeSinceLastSave.TotalSeconds >= maxSaveFrequency.Value) {
-                PerformSave(jsonPath, saveableThing);
-            } else {
-                QueueSave(jsonPath, saveableThing);
-            }
-        }
-
-        private static void PerformSave(string jsonPath, object saveableThing) {
-            DebugLog("saving to json at path " + jsonPath, 'w');
-
-            LastSavedObjTransforms = ObjTransforms;
-
-            string thisJson = JsonConvert.SerializeObject(saveableThing);
-            System.IO.File.WriteAllText(jsonPath, thisJson);
-            lastSaveTime = DateTime.Now;
-        }
-
-        private static void QueueSave(string jsonPath, object saveableThing) {
-            Debug.LogWarning("It's been < " + maxSaveFrequency.Value.ToString() + " seconds since the last save- queuing");
-            Task.Run(async () => {
-                await Task.Delay(TimeSpan.FromSeconds(maxSaveFrequency.Value));
-                saveIsCached = false;
-                SaveToJson(jsonPath, saveableThing);
-            });
-        }
-
-        public static Dictionary<string, Transform> LoadFromJson(string jsonPath) {
-            DebugLog("loading from json at path " + jsonPath, 'w');
-            string json = System.IO.File.ReadAllText(jsonPath);
-            // get file from path
-            return JsonConvert.DeserializeObject<Dictionary<string, Transform>>(json);
-        }
-
-
         public void Awake() {
             lastSaveTime = DateTime.MinValue;
 
             MLS = Logger;
             MLS.LogInfo("PersistentShipObjects instantiated!");
 
-            ObjTransforms = LoadFromJson(ObjTransformsPath); //new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
-
             if (instance == null) {
                 instance = this;
             }
+            ObjTransforms = JsonIO.LoadFromJson<Dictionary<string, Transform>>(ObjTransformsPath); //new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
 
             doDebugPrints = Config.Bind(
                 "Debug",
@@ -149,10 +101,10 @@ namespace PersistentShipObjects {
                 ObjTransforms.Add(name, PosAndRotAsTransform(trans.position, trans.rotation));
             }
 
-            SaveToJson(ObjTransformsPath, ObjTransforms);
+            JsonIO.QueueSaveToJson(ObjTransformsPath, ObjTransforms, maxSaveFrequency.Value); // not awaited-
 
-            DebugLog("saved object transform!", 'i');
-            return true;
+            DebugLog("saved object transform (to memory-)", 'i');
+            return true; // it *did* save to ObjTransforms- but whether or not it *saves* saves-
         }
 
 
