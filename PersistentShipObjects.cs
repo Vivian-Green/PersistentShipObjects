@@ -11,6 +11,8 @@ using System.Reflection;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Newtonsoft.Json;
+using System.Threading.Tasks;
 
 
 // todo: ask chatgpt for this lmao
@@ -31,6 +33,7 @@ using UnityEngine.Rendering;
 namespace PersistentShipObjects {
     [BepInDependency("evaisa.lethallib", "0.12.1")]
     [BepInPlugin(GUID, NAME, VERSION)]
+
     public class PersistentShipObjects : BaseUnityPlugin {
         public static ManualLogSource MLS { get; private set; }
 
@@ -41,16 +44,66 @@ namespace PersistentShipObjects {
         private readonly Harmony harmony = new Harmony(GUID);
         public static PersistentShipObjects instance;
 
-        public static Dictionary<string, Transform> ObjTransforms;
         public static ConfigEntry<bool> doDebugPrints;
+        public static ConfigEntry<int> maxSaveFrequency;
 
+        public static Dictionary<string, Transform> ObjTransforms;
+        public static Dictionary<string, Transform> LastSavedObjTransforms;
+        public static string ObjTransformsPath = Application.persistentDataPath + "/PersistentShipObjects/ObjTransforms.json";
+
+        private static DateTime lastSaveTime;
+        private static bool saveIsCached = false;
+
+
+
+        public static void SaveToJson(string jsonPath, object saveableThing) {
+            if (saveIsCached || LastSavedObjTransforms == ObjTransforms) return;
+
+            saveIsCached = true;
+
+            TimeSpan timeSinceLastSave = DateTime.Now - lastSaveTime;
+
+            if (timeSinceLastSave.TotalSeconds >= maxSaveFrequency.Value) {
+                PerformSave(jsonPath, saveableThing);
+            } else {
+                QueueSave(jsonPath, saveableThing);
+            }
+        }
+
+        private static void PerformSave(string jsonPath, object saveableThing) {
+            DebugLog("saving to json at path " + jsonPath, 'w');
+
+            LastSavedObjTransforms = ObjTransforms;
+
+            string thisJson = JsonConvert.SerializeObject(saveableThing);
+            System.IO.File.WriteAllText(jsonPath, thisJson);
+            lastSaveTime = DateTime.Now;
+        }
+
+        private static void QueueSave(string jsonPath, object saveableThing) {
+            Debug.LogWarning("It's been < " + maxSaveFrequency.Value.ToString() + " seconds since the last save- queuing");
+            Task.Run(async () => {
+                await Task.Delay(TimeSpan.FromSeconds(maxSaveFrequency.Value));
+                saveIsCached = false;
+                SaveToJson(jsonPath, saveableThing);
+            });
+        }
+
+        public static Dictionary<string, Transform> LoadFromJson(string jsonPath) {
+            DebugLog("loading from json at path " + jsonPath, 'w');
+            string json = System.IO.File.ReadAllText(jsonPath);
+            // get file from path
+            return JsonConvert.DeserializeObject<Dictionary<string, Transform>>(json);
+        }
 
 
         public void Awake() {
+            lastSaveTime = DateTime.MinValue;
+
             MLS = Logger;
             MLS.LogInfo("PersistentShipObjects instantiated!");
 
-            ObjTransforms = new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
+            ObjTransforms = LoadFromJson(ObjTransformsPath); //new Dictionary<string, Transform> { { "testName", PersistentShipObjects.PosAndRotAsTransform(Vector3.zero, Quaternion.identity) } };
 
             if (instance == null) {
                 instance = this;
@@ -61,7 +114,15 @@ namespace PersistentShipObjects {
                 "doDebugPrints",
                 false,
                 "should PersistentShipObjects paint the console yellow?"
-            );//*/
+            );
+            maxSaveFrequency = Config.Bind(
+                "General",
+                "maxSaveFrequency",
+                15,
+                "how many seconds have to pass between saving objects?"
+            );
+
+            //*/
             //Config.Save();
 
             Harmony.CreateAndPatchAll(typeof(ShipBuildModeManagerPatch));
@@ -87,6 +148,8 @@ namespace PersistentShipObjects {
             } else {
                 ObjTransforms.Add(name, PosAndRotAsTransform(trans.position, trans.rotation));
             }
+
+            SaveToJson(ObjTransformsPath, ObjTransforms);
 
             DebugLog("saved object transform!", 'i');
             return true;
