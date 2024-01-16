@@ -60,7 +60,7 @@ namespace PersistentShipObjects.Patches {
 
                         Quaternion relativeRotation = Quaternion.Inverse(shipTransform.rotation) * placeableObjectTransform.rotation;
 
-                        Transform newTrans = PersistentShipObjects.PosAndRotAsTransform(relativePosition, relativeRotation);
+                        Transform newTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(relativePosition, relativeRotation).transform;
                         PersistentShipObjects.SaveObjTransform(actualItemName, newTrans);
                     } else {
                         Debug.LogError("ShipBuildModeManagerPatch: Transform is null");
@@ -95,7 +95,7 @@ namespace PersistentShipObjects.Patches {
                 return;
             }
 
-            Debug.Log(indentMinusOne + "P " + parent.gameObject.GetType() + " named " + parent.name + "-------------------- P of " + parent.childCount);
+            PersistentShipObjects.DebugLog(indentMinusOne + "P " + parent.gameObject.GetType() + " named " + parent.name + "-------------------- P of " + parent.childCount, 'w');
 
             foreach (Transform child in parent) {
                 PersistentShipObjects.DebugLog(indentMinusOne + TAB + child.GetType() + " named " + child.name);
@@ -106,12 +106,13 @@ namespace PersistentShipObjects.Patches {
             }
         }
 
-
+        /*
         [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObject")]
         [HarmonyPrefix]
         public static void PlaceShipObject(ref Vector3 placementPosition, ref Vector3 placementRotation, PlaceableShipObject placeableObject) {
+            Debug.LogWarning("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
             PersistentShipObjects.DebugLog("entering PlaceShipObject patch");
-            Transform oldTrans = PersistentShipObjects.PosAndRotAsTransform(placementPosition, Quaternion.Euler(placementRotation));
+            Transform oldTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(placementPosition, Quaternion.Euler(placementRotation));
 
             //----------------------------------------------------------------------------------------------------------------------------------- start checks
             if (placeableObject.transform == null) {
@@ -155,7 +156,19 @@ namespace PersistentShipObjects.Patches {
                                 Debug.LogError("last placed object was not by a player, updating transform");
                                 placementRotation = relativeRotation.eulerAngles;
                                 placementPosition = savedTransOffset.position - grandparentTransform.position;
-                            }
+                            }/*
+
+                            PersistentShipObjects.DebugLog("transform: " + savedTransOffset.ToString());
+
+                            if (lastPlacementPlayer > -1) {
+                                Debug.LogError("last placed object was by player " + lastPlacementPlayer + "; not updating placement transform after player placement");
+                                lastPlacementPlayer = -1;
+
+                            } else {
+                                Debug.LogError("last placed object was not by a player, updating transform");
+                                placementRotation = savedTransOffset.eulerAngles;
+                                placementPosition = savedTransOffset.position;// - grandparentTransform.position;
+                            }*//*
                         }
                     } else {
                         PersistentShipObjects.DebugLog("item not in ObjTransforms!");
@@ -167,10 +180,10 @@ namespace PersistentShipObjects.Patches {
                 }
             }
             PersistentShipObjects.DebugLog("trans before: " + oldTrans.position.ToString() + "; " + oldTrans.rotation.ToString());
-            oldTrans = PersistentShipObjects.PosAndRotAsTransform(placementPosition, Quaternion.Euler(placementRotation)) ?? null;
+            oldTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(placementPosition, Quaternion.Euler(placementRotation)) ?? null;
             PersistentShipObjects.DebugLog("trans after: " + oldTrans.position.ToString() + "; " + oldTrans.rotation.ToString());
             PersistentShipObjects.DebugLog("exiting PlaceShipObject patch & moving to PlaceShipObject");
-        }
+        }*/
 
 
         [HarmonyPatch(typeof(StartOfRound), "StartGame")]
