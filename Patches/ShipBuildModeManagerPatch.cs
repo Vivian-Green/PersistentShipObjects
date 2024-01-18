@@ -36,7 +36,8 @@ namespace PersistentShipObjects.Patches {
                         Transform parentTrans = placeableObject.transform.parent.transform;
                         String thisUnlockableName = StartOfRound.Instance.unlockablesList.unlockables[placeableObject.unlockableID].unlockableName;
 
-                        TransformObject objnew = new TransformObject(parentTrans.position, parentTrans.rotation.eulerAngles, placeableObject.unlockableID, thisUnlockableName);
+                        //TransformObject objnew = new TransformObject(parentTrans.position, parentTrans.rotation.eulerAngles, placeableObject.unlockableID, thisUnlockableName);
+                        TransformObject objnew = new TransformObject(newPosition, newRotation, placeableObject.unlockableID, thisUnlockableName);
                         Debug.Log(objnew.unlockableName + " ID " + objnew.unlockableID);
                         PersistentShipObjects.UpdateObjectManager(objnew);
 
@@ -63,15 +64,13 @@ namespace PersistentShipObjects.Patches {
         public static void LoadUnlockables()
         {
             Debug.Log("MOVING SHIT AROUND!!!");
-            foreach (PlaceableShipObject obj in UnityEngine.Object.FindObjectsOfType(typeof(PlaceableShipObject)))
+            foreach (PlaceableShipObject obj in GameObject.FindObjectsOfType(typeof(PlaceableShipObject)))
             {   
-                int thisUnlockableID = obj.unlockableID;
 
-                //rsistentShipObjects.DebugPrintDescendantsWrapper(obj.transform);
-
+                //persistentShipObjects.DebugPrintDescendantsWrapper(obj.transform);
                 TransformObject foundObj = PersistentShipObjects.FindObjectIfExists(obj.unlockableID);
                 if (foundObj != null) {
-                    Debug.Log("    Item Found: " + foundObj.unlockableName + " at pos " + obj.transform.parent.transform);
+                    Debug.Log("    Item Found: " + foundObj.unlockableName + " at pos " + obj.transform.parent.transform.position);
 
                     Debug.Log("        type: " + obj.GetType());
                     Debug.Log("        name: " + obj.name);
@@ -79,12 +78,12 @@ namespace PersistentShipObjects.Patches {
                     Debug.Log("        parent name:" + obj.transform.parent?.name);
 
                     // todo: GHBB THIS MUST BE RELATIVE TO THE SHIP, THE SHIP FUCKIGN MOVES
-                    obj.transform.parent.transform.position = foundObj.pos;
-                    obj.transform.parent.transform.rotation = Quaternion.Euler(foundObj.rot);
+                    obj.transform.parent.transform.position = foundObj.pos.GetVector3();
+                    obj.transform.parent.transform.rotation = Quaternion.Euler(foundObj.rot.GetVector3());
 
-                    Debug.Log("        new pos: " + obj.transform.parent.transform);
+                    Debug.Log("        new pos: " + obj.transform.parent.transform.position);
                 } else {
-                    PersistentShipObjects.DebugLog("    couldn't find " + obj.transform.parent?.name);
+                    Debug.Log("    couldn't find " + obj.transform.parent?.name);
                 }
             }
         }

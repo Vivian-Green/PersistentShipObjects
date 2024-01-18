@@ -141,30 +141,42 @@ namespace PersistentShipObjects {
         // Inits ObjectManager from file
         public static List<TransformObject> ReadJSON() {
             Console.WriteLine("entering ReadJSON()");
-            string json = File.ReadAllText(ObjTransformsPath);
-            Console.WriteLine("    json:\n" + json);
 
-            List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
+            try {
+                string json = File.ReadAllText(ObjTransformsPath) ?? null;
 
-            Console.WriteLine("    length of objs: " + objs.Count);
-            foreach (TransformObject obj in objs) {
-                Console.WriteLine("        object found!");
-                Console.WriteLine("        named: " + obj.unlockableName);
-                //TransformObjectsManager.Add(obj);
+                if (json != null) {
+                    Console.WriteLine("    json:\n" + json);
+
+                    List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
+
+                    Console.WriteLine("    length of objs: " + objs.Count);
+                    foreach (TransformObject obj in objs) {
+                        Console.WriteLine("        object found!");
+                        Console.WriteLine("        named: " + obj.unlockableName);
+                        //TransformObjectsManager.Add(obj);
+                    }
+                    return objs;
+                }                
+            } catch (Exception ex) { 
+                Debug.Log(ex);
             }
+            return new List<TransformObject> { };
 
-            return objs;
         }
 
 
         public static void DebugLog(System.Object logMessage, char logType = 'i') {
-            if (doDebugPrints.Value != true) return; // todo: is this truthy or boolean- how does C# work again lmao. does !doDebugPrints.Value give left or right:
+            Console.WriteLine("fuck");
+            if ((doDebugPrints?.Value ?? true) != true) return; // todo: is this truthy or boolean- how does C# work again lmao. does !doDebugPrints.Value give left or right:
                                                      // true: true                  true: true
                                                      // false: false                false: true
                                                      // null: false                 null: false
+            Console.WriteLine("fuckA");
             String LogString = logMessage.ToString();
-
+            Console.WriteLine("fuckB");
             Console.BackgroundColor = ConsoleColor.DarkGray;
+            Console.WriteLine("fuckC");
             switch (logType) {
                 case 'w':
                     //Console.ForegroundColor = ConsoleColor.;
