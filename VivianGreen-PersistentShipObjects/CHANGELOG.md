@@ -1,3 +1,7 @@
+## 0.2.0
+ - yet more rewriting
+ - now works with v49-
+
 ## 0.1.3
  - rewrote DebugPrintDescendants - the indent building is now constant (making *one* copy of a string for each descendant) instead of O(n^2).
  - added Debug.doDebugPrints option to the config, defaulting to false.

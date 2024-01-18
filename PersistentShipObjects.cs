@@ -39,7 +39,7 @@ namespace PersistentShipObjects {
     public class PersistentShipObjects : BaseUnityPlugin {
         private const string GUID = "VivianGreen.PersistentShipObjects";
         private const string NAME = "PersistentShipObjects";
-        private const string VERSION = "0.1.2";
+        private const string VERSION = "0.2.0";
 
         public static ManualLogSource MLS { get; private set; }
         private readonly Harmony harmony = new Harmony(GUID);
@@ -53,7 +53,7 @@ namespace PersistentShipObjects {
         public static ConfigEntry<bool> doDebugPrints;
 
         // Object Manager
-        public static List<TransformObjects> TransformObjectsManager; // no dict?? [megamind ascii but without fucking up export.py]
+        public static List<TransformObject> TransformObjectsManager; // no dict?? [megamind ascii but without fucking up export.py]
 
         const int A_CONCERNING_AMOUNT_OF_NESTING = 30; // arbitrary magic number for DebugPrintDescendants. a transform having a 
                                                        // great great great great great great great great great great great great great great great great great great great great great great great great great great great great
@@ -82,7 +82,7 @@ namespace PersistentShipObjects {
                 File.Create(ObjTransformsPath).Dispose();
             }
 
-            TransformObjectsManager = new List<TransformObjects>();
+            TransformObjectsManager = new List<TransformObject>();
             ReadJSON();
 
             //Config.Save();
@@ -92,7 +92,7 @@ namespace PersistentShipObjects {
 
         // Write to file, should be called every time an update occurs
         // Updates occur on placement editing
-        public static void SaveObjTransform() {
+        public static void SaveObjTransforms() {
             var str = JsonConvert.SerializeObject(TransformObjectsManager);
             Debug.Log("JSON: ");
             Debug.Log(str);
@@ -100,9 +100,9 @@ namespace PersistentShipObjects {
         }
         
         // Finds object in manager via UnlockableID searching ObjectManager
-        public static TransformObjects FindObjectIfExists(int unlockableID)
+        public static TransformObject FindObjectIfExists(int unlockableID)
         {
-            foreach(TransformObjects obj in TransformObjectsManager)
+            foreach(TransformObject obj in TransformObjectsManager)
             {
                 if (obj.unlockableID == unlockableID) 
                 {
@@ -113,7 +113,7 @@ namespace PersistentShipObjects {
         }
 
         // Updates ObjectsManager with each update
-        public static void UpdateObjectManager(TransformObjects newObj)
+        public static void UpdateObjectManager(TransformObject newObj)
         {
             if (newObj == null)
             {
@@ -121,7 +121,7 @@ namespace PersistentShipObjects {
                 return;
             }
 
-            foreach(TransformObjects obj in TransformObjectsManager)
+            foreach(TransformObject obj in TransformObjectsManager)
             {
                 if (!TransformObjectsManager.Any())
                 {
@@ -137,23 +137,24 @@ namespace PersistentShipObjects {
             }
 
             TransformObjectsManager.Add(newObj);
-            SaveObjTransform();
+            SaveObjTransforms();
         }
 
         // Inits ObjectManager from file
         public static void ReadJSON()
         {
-            try
+            DebugLog("entering ReadJSON()", 'w');
+            string json = File.ReadAllText(ObjTransformsPath);
+            DebugLog("    json:\n"+json, 'w');
+
+            List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
+
+            DebugLog("    length of objs: " + objs.Count, 'w');
+            foreach (TransformObject obj in objs)
             {
-                string json = File.ReadAllText(ObjTransformsPath);
-                List<TransformObjects> objs = JsonConvert.DeserializeObject<List<TransformObjects>>(json);
-                foreach (TransformObjects obj in objs)
-                {
-                    TransformObjectsManager.Add(obj);
-                }
-            } catch (Exception e)
-            {
-                //
+                DebugLog("        object found!", 'w');
+                DebugLog("        named: " + obj.unlockableName, 'w');
+                TransformObjectsManager.Add(obj);
             }
         }
 
@@ -199,6 +200,7 @@ namespace PersistentShipObjects {
 
         // I wonder if there's a way to pass indentMinusOne as a ref to avoid making 500 copies of it                                                               -viv
         static void DebugPrintDescendants(Transform parent, string indentMinusOne) {
+            return; // for why borked?? it's untouched since the last time it was working- wuh-
             /*String indentMinusOne = "";                 // leaving O(n^2) code here as a reminder to not concat strings like this.
             for (int i = 0; i < depth; i++) {           // Shouldn't matter without deep nesting, which is now Concerning(tm) anyway
                 indentMinusOne += TAB;                  // but also this function is recursive as hell, soooooooo- try                                              -viv
