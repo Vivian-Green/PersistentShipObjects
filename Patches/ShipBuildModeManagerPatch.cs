@@ -1,5 +1,4 @@
 ﻿using HarmonyLib;
-using LethalCompanyTemplate;
 using System;
 using System.Collections;
 using System.Collections.Generic;

@@ -272,6 +272,8 @@ def main():
 
     # Copy PersistentShipObjects.dll
     copy_files(VSDLLBuildPath, export_folder_path)
+    print("AAAAAAAAAAAAaa")
+    print(thunderstore_mod_folder_path)
     copy_files(VSDLLBuildPath, thunderstore_mod_folder_path)
 
     # Copy manifest.json

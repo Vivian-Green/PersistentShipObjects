@@ -1,6 +1,5 @@
 using UnityEngine;
-namespace LethalCompanyTemplate
-{
+namespace PersistentShipObjects {
     public class TransformObject
     {
         public Vector3 pos;

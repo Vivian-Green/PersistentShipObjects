@@ -11,7 +11,6 @@ using System.Linq;
 using System.Reflection.Emit;
 using System.ComponentModel;
 using System.Collections;
-using LethalCompanyTemplate;
 using Newtonsoft.Json;
 using System.IO;
 using Newtonsoft.Json.Linq;
@@ -82,8 +81,7 @@ namespace PersistentShipObjects {
                 File.Create(ObjTransformsPath).Dispose();
             }
 
-            TransformObjectsManager = new List<TransformObject>();
-            ReadJSON();
+            TransformObjectsManager = ReadJSON();
 
             //Config.Save();
             
@@ -141,21 +139,21 @@ namespace PersistentShipObjects {
         }
 
         // Inits ObjectManager from file
-        public static void ReadJSON()
-        {
-            DebugLog("entering ReadJSON()", 'w');
+        public static List<TransformObject> ReadJSON() {
+            Console.WriteLine("entering ReadJSON()");
             string json = File.ReadAllText(ObjTransformsPath);
-            DebugLog("    json:\n"+json, 'w');
+            Console.WriteLine("    json:\n" + json);
 
             List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
 
-            DebugLog("    length of objs: " + objs.Count, 'w');
-            foreach (TransformObject obj in objs)
-            {
-                DebugLog("        object found!", 'w');
-                DebugLog("        named: " + obj.unlockableName, 'w');
-                TransformObjectsManager.Add(obj);
+            Console.WriteLine("    length of objs: " + objs.Count);
+            foreach (TransformObject obj in objs) {
+                Console.WriteLine("        object found!");
+                Console.WriteLine("        named: " + obj.unlockableName);
+                //TransformObjectsManager.Add(obj);
             }
+
+            return objs;
         }
 
 
@@ -208,7 +206,7 @@ namespace PersistentShipObjects {
 
             indentMinusOne += TAB;
             if (indentMinusOne.Length > A_CONCERNING_AMOUNT_OF_NESTING * TAB.Length) {
-                Debug.LogWarning("DebugPrintDescendants: depth is " + (indentMinusOne.Length / 4).ToString() + ", which is probably very wrong. If this is a mod conflict, got dang they are nesting too hard. Have probably a comical amount of error:");
+                Console.WriteLine("DebugPrintDescendants: depth is " + (indentMinusOne.Length / 4).ToString() + ", which is probably very wrong. If this is a mod conflict, got dang they are nesting too hard. Have probably a comical amount of error:");
                 System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
                 Debug.LogError(stackTrace);
                 return;
