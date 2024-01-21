@@ -98,41 +98,17 @@ namespace PersistentShipObjects {
         }
         
         // Finds object in manager via UnlockableID searching ObjectManager
-        public static TransformObject FindObjectIfExists(int unlockableID)
-        {
-            foreach(TransformObject obj in TransformObjectsManager)
-            {
-                if (obj.unlockableID == unlockableID) 
-                {
-                    return obj;
-                }
-            }
-            return null;
+        public static TransformObject FindObjectIfExists(int unlockableID) {
+            return TransformObjectsManager.FirstOrDefault(obj => obj.unlockableID == unlockableID);
         }
 
         // Updates ObjectsManager with each update
-        public static void UpdateObjectManager(TransformObject newObj)
-        {
-            if (newObj == null)
-            {
-                Debug.Log("NULL OBJECT??");
-                return;
-            }
+        public static void UpdateObjectManager(TransformObject newObj) {
+            if (newObj == null) return;
 
-            foreach(TransformObject obj in TransformObjectsManager)
-            {
-                if (!TransformObjectsManager.Any())
-                {
-                    TransformObjectsManager.Add(newObj);
-                    break;
-                }
+            TransformObject oldObjIfExists = TransformObjectsManager.FirstOrDefault(thisObj => thisObj.unlockableID == newObj.unlockableID);
 
-                if (obj.unlockableID == newObj.unlockableID)
-                {
-                    TransformObjectsManager.Remove(obj);
-                    break;
-                }
-            }
+            if (oldObjIfExists != null) TransformObjectsManager.Remove(oldObjIfExists);
 
             TransformObjectsManager.Add(newObj);
             SaveObjTransforms();
@@ -145,72 +121,89 @@ namespace PersistentShipObjects {
             try {
                 string json = File.ReadAllText(ObjTransformsPath) ?? null;
 
-                if (json != null) {
-                    Console.WriteLine("    json:\n" + json);
+                if (json == null) goto ReadJsonEarlyReturn;
 
-                    List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
+                Console.WriteLine("    json:\n" + json);
 
-                    Console.WriteLine("    length of objs: " + objs.Count);
-                    foreach (TransformObject obj in objs) {
-                        Console.WriteLine("        object found!");
-                        Console.WriteLine("        named: " + obj.unlockableName);
-                        //TransformObjectsManager.Add(obj);
-                    }
-                    return objs;
-                }                
+                List<TransformObject> objs = JsonConvert.DeserializeObject<List<TransformObject>>(json);
+
+                Console.WriteLine("    length of objs: " + objs.Count);
+                foreach (TransformObject obj in objs) {
+                    Console.WriteLine("        object found!");
+                    Console.WriteLine("        named: " + obj.unlockableName);
+                    //TransformObjectsManager.Add(thisObj);
+                }
+                return objs;      
             } catch (Exception ex) { 
                 Debug.Log(ex);
             }
+            ReadJsonEarlyReturn:    
             return new List<TransformObject> { };
-
         }
 
 
         public static void DebugLog(System.Object logMessage, char logType = 'i') {
-            Console.WriteLine("fuck");
-            if ((doDebugPrints?.Value ?? true) != true) return; // todo: is this truthy or boolean- how does C# work again lmao. does !doDebugPrints.Value give left or right:
-                                                     // true: true                  true: true
-                                                     // false: false                false: true
-                                                     // null: false                 null: false
-            Console.WriteLine("fuckA");
-            String LogString = logMessage.ToString();
-            Console.WriteLine("fuckB");
-            Console.BackgroundColor = ConsoleColor.DarkGray;
-            Console.WriteLine("fuckC");
-            switch (logType) {
-                case 'w':
-                    //Console.ForegroundColor = ConsoleColor.;
-                    MLS.LogWarning("PersistentShipObjects: " + LogString);
-                    break;
-                case 'm':
-                    MLS.LogMessage("PersistentShipObjects: " + LogString);
-                    break;
-                case 'e':
-                    MLS.LogError("PersistentShipObjects: " + LogString);
-                    break;
-                case 'i':
-                    MLS.LogInfo("PersistentShipObjects: " + LogString);
-                    break;
-                default:
-                    MLS.LogWarning("DebugLogger received an invalid log type, but here's whatever this is:");
-                    DebugLog("    " + LogString, 'w');
-                    break;
+            if (doDebugPrints?.Value == false) return; 
+            if (logMessage == null) {
+                Console.WriteLine("Error: logMessage is null");
+                return;
             }
-            //Console.WriteLine("PersistentShipObjects: " + LogString);
-            Console.ResetColor();
-        }
 
+            String LogString = logMessage.ToString();
+            if (LogString == null) {
+                Console.WriteLine("Error: LogString is null");
+                return;
+            }
+
+            Console.BackgroundColor = ConsoleColor.DarkGray;
+            try {
+                string fullMessage = "PersistentShipObjects: " + LogString;
+                switch (logType) {
+                    case 'w':
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.WriteLine(fullMessage);
+                        break;
+                    case 'm':
+                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.WriteLine(fullMessage);
+                        break;
+                    case 'e':
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine(fullMessage);
+                        break;
+                    case 'i':
+                        Console.WriteLine(fullMessage);
+                        break;
+                    default:
+                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.WriteLine("DebugLogger received an invalid log type, but here's whatever this is:");
+                        DebugLog("    " + LogString, 'w');
+                        break;
+                }
+                Console.ResetColor();
+            } catch (Exception ex) {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine(ex);
+                Console.ResetColor();
+            }
+        }
 
 
         public static void DebugPrintDescendantsWrapper(Transform parent) {
             if (doDebugPrints.Value == false) return;
+            if (!parent.gameObject) return; //todo" err
+
+            if (parent.parent) {
+                DebugLog("My parent: " + parent.parent.gameObject.name + " at pos " + parent.parent.position, 'w');
+            }
             DebugPrintDescendants(parent, "");
         }
 
 
         // I wonder if there's a way to pass indentMinusOne as a ref to avoid making 500 copies of it                                                               -viv
         static void DebugPrintDescendants(Transform parent, string indentMinusOne) {
-            return; // for why borked?? it's untouched since the last time it was working- wuh-
+            //return; // for why borked?? it's untouched since the last time it was working- wuh-
+
             /*String indentMinusOne = "";                 // leaving O(n^2) code here as a reminder to not concat strings like this.
             for (int i = 0; i < depth; i++) {           // Shouldn't matter without deep nesting, which is now Concerning(tm) anyway
                 indentMinusOne += TAB;                  // but also this function is recursive as hell, soooooooo- try                                              -viv
@@ -226,9 +219,9 @@ namespace PersistentShipObjects {
 
             DebugLog(parent.gameObject, 'w');
             DebugLog(parent.gameObject.GetType(), 'w');
-            DebugLog(parent.gameObject.name, 'w');
+            DebugLog(parent.gameObject.name + " at pos " + parent.position, 'w');
 
-            DebugLog(indentMinusOne + "P " + parent.gameObject.GetType() + " named " + parent.name + "-------------------- P of " + parent.childCount, 'w');
+            DebugLog(indentMinusOne + "P " + parent.gameObject.GetType() + " named " + parent.name + " at pos " + parent.position + "-------------------- P of " + parent.childCount, 'w');
 
             foreach (Transform child in parent) {
                 DebugLog(indentMinusOne + TAB + child.GetType() + " named " + child.name);

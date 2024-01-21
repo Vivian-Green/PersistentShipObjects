@@ -1,6 +1,6 @@
 {
   "name": "PersistentShipObjects",
-  "version_number": "0.2.0",
+  "version_number": "0.2.1",
   "website_url": "https://github.com/Vivian-Green/PersistentShipObjects",
   "description": "keep ya ship's things where ya left 'em",
   "dependencies": [

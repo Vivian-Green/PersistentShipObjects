@@ -1,3 +1,4 @@
+using Unity.Jobs.LowLevel.Unsafe;
 using UnityEngine;
 namespace PersistentShipObjects {
     public class TransformObject // gdi gh is right
@@ -14,12 +15,16 @@ namespace PersistentShipObjects {
             unlockableName = newUnlockableName;
         }
 
-        public Vector3 getPos() {
-            return pos.GetVector3();
-        }
-
-        public Vector3 getRotation() {
-            return rot.GetVector3();
+        public Vector3 Get(string val) {
+            switch (val.ToLower()) {
+                case "pos":
+                    return pos.GetVector3();
+                case "rot":
+                    return rot.GetVector3();
+                default:
+                    break;
+            }
+            return Vector3.zero; //
         }
      }
 
