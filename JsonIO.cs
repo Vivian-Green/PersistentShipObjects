@@ -8,6 +8,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Newtonsoft.Json.Linq;
 
+/*
+
 namespace PersistentShipObjects {
     // todo: all references to 30 here are Config.General.whateverINamedTheMaxSaveFrequencyThere and should stop being magic-
 
@@ -243,3 +245,4 @@ namespace PersistentShipObjects {
         }
     }
 }
+*/

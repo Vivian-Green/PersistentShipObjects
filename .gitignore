@@ -3,3 +3,4 @@ obj/*
 
 **.bak
 *.cache
+*.csproj

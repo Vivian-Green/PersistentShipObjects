@@ -1,3 +1,8 @@
+## 0.2.1
+ - significant rewrite, (with a lot of help from ghxc2- get credited on)
+ - hella cleanup
+ - now works with v49- whoops!
+
 ## 0.1.3
  - rewrote DebugPrintDescendants - the indent building is now constant (making *one* copy of a string for each descendant) instead of O(n^2).
  - added Debug.doDebugPrints option to the config, defaulting to false.

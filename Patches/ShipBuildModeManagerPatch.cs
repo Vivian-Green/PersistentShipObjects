@@ -1,8 +1,8 @@
 ﻿using HarmonyLib;
-using LethalLib;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Text;
@@ -11,185 +11,161 @@ using Unity.Netcode;
 using UnityEngine;
 
 namespace PersistentShipObjects.Patches {
-    internal class ShipBuildModeManagerPatch {
-        const int A_CONCERNING_AMOUNT_OF_NESTING = 30; // arbitrary magic number for DebugPrintDescendants a transform having a 
-                                                       // great great great great great great great great great great great great great great great great great great great great great great great great great great great great
-                                                       // grandchild is.. probably wrong, if not very dumb.                                                         - viv
-        const String TAB = "|   ";
-
-        static int lastPlacementPlayer = -1;
-
+    internal class ShipBuildModeManagerPatch
+    {
         [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObjectClientRpc")]
-        [HarmonyPostfix]
-        public static void PlaceShipObjectClientRpc(Vector3 newPosition, Vector3 newRotation, NetworkObjectReference objectRef, int playerWhoMoved) {
-            // SaveObjTransform(string name, Transform trans) checks for if host player, check isn't needed here
-            // todo: but move it here anyway
-
-            PersistentShipObjects.DebugLog("entering PlaceShipObjectClientRpc patch");
-
-            lastPlacementPlayer = playerWhoMoved;
+        [HarmonyPrefix]
+        public static void PlaceShipObjectClientRpc(Vector3 newPosition, Vector3 newRotation, NetworkObjectReference objectRef, int playerWhoMoved)
+        {
             objectRef.TryGet(out NetworkObject netObj);
             PlaceableShipObject placeableObject = netObj.GetComponentInChildren<PlaceableShipObject>();
 
-            //----------------------------------------------------------------------------------------------------------------------------------- start checks
-            if (placeableObject != null) {
+            if (placeableObject == null) { Debug.LogError("ShipBuildModeManagerPatch: placeableObject is null"); goto PlaceShipObjectClientRpcEarlyReturn; }
+            if (placeableObject.transform == null) { Debug.LogError("ShipBuildModeManagerPatch: placeableObject.transform is null"); goto PlaceShipObjectClientRpcEarlyReturn; }
+
             GameObject actualObject = placeableObject.transform.parent?.gameObject;
 
-                if (actualObject != null) {
-                    String actualItemName = actualObject.name;
+            if (actualObject == null) { Debug.LogError("ShipBuildModeManagerPatch: actualObject is null"); goto PlaceShipObjectClientRpcEarlyReturn;}
 
-                    if (placeableObject.transform != null) {
-                        //----------------------------------------------------------------------------------------------------------------------- end checks
-                        //----------------------------------------------------------------------------------------------------------------------- start debug
-                        PersistentShipObjects.DebugLog(placeableObject.GetType() + " named: " + actualItemName);
+            String actualItemName = actualObject.name;
 
-                        PersistentShipObjects.DebugLog("parent pos is: " + placeableObject.transform.parent?.transform.position ?? null);
-                        PersistentShipObjects.DebugLog("parent rot is: " + placeableObject.transform.parent?.transform.rotation ?? null);
+            Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableObject.GetType() + " named " + actualItemName + " at pos " + newPosition);
 
-                        Debug.Log("ShipBuildModeManagerPatch: Saving trans of " + placeableObject.GetType() + " named " + actualItemName + " at pos " + newPosition);
+            Transform parentTrans = placeableObject.transform.parent.transform;
 
-                        PersistentShipObjects.DebugLog("my grandparent: " + placeableObject.transform.parent?.transform.parent?.gameObject.name);
-                        PersistentShipObjects.DebugLog("printing tree");
-                        DebugPrintDescendantsWrapper(placeableObject.transform.parent?.transform);
-                        //----------------------------------------------------------------------------------------------------------------------- end debug
+            Debug.Log("old parent position: " + placeableObject.transform.parent.position);
 
-                        Transform placeableObjectTransform = placeableObject.transform;
-                        Transform shipTransform = placeableObject.transform.parent?.transform.parent?.transform;
+            String thisUnlockableName = StartOfRound.Instance.unlockablesList.unlockables[placeableObject.unlockableID].unlockableName;
 
-                        Vector3 relativePosition = shipTransform.position - placeableObjectTransform.position;
+            // todo: if this works I'm eating my own ass
 
-                        Quaternion relativeRotation = Quaternion.Inverse(shipTransform.rotation) * placeableObjectTransform.rotation;
-
-                        Transform newTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(relativePosition, relativeRotation).transform;
-                        PersistentShipObjects.SaveObjTransform(actualItemName, newTrans);
-                    } else {
-                        Debug.LogError("ShipBuildModeManagerPatch: Transform is null");
-                    }
-                } else {
-                    Debug.LogError("ShipBuildModeManagerPatch: placeableObject's parent object");
-                }
-            } else {
-                Debug.LogError("ShipBuildModeManagerPatch: placeableObject is null");
-            }
-            PersistentShipObjects.DebugLog("exiting PlaceShipObjectClientRpc patch & moving to PlaceShipObjectClientRpc");
-        }
-
-        static void DebugPrintDescendantsWrapper(Transform parent) {
-            if (PersistentShipObjects.doDebugPrints.Value == false) return;
-            DebugPrintDescendants(parent, "");
-        }
+            // todo: it mostly works in place of [HarmonyPatch(typeof(StartOfRound), "OnEnable")]
+            /*StartOfRound.Instance.unlockablesList.unlockables[placeableObject.unlockableID].placedPosition = newPosition;
+            StartOfRound.Instance.unlockablesList.unlockables[placeableObject.unlockableID].placedRotation = newRotation;*/
 
 
-        // I wonder if there's a way to pass indentMinusOne as a ref to avoid making 500 copies of it                                                               -viv
-        static void DebugPrintDescendants(Transform parent, string indentMinusOne) { 
-            /*String indentMinusOne = "";                 // leaving O(n^2) code here as a reminder to not concat strings like this.
-            for (int i = 0; i < depth; i++) {           // Shouldn't matter without deep nesting, which is now Concerning(tm) anyway
-                indentMinusOne += TAB;                  // but also this function is recursive as hell, soooooooo- try                                              -viv
-            }//*/
+            //Vector3 offset = -placeableObject.transform.position;
 
-            indentMinusOne += TAB;
-            if (indentMinusOne.Length > A_CONCERNING_AMOUNT_OF_NESTING * TAB.Length) {
-                Debug.LogWarning("DebugPrintDescendants: depth is "+ (indentMinusOne.Length/4).ToString()+", which is probably very wrong. If this is a mod conflict, got dang they are nesting too hard. Have probably a comical amount of error:");
-                System.Diagnostics.StackTrace stackTrace = new System.Diagnostics.StackTrace();
-                Debug.LogError(stackTrace);
-                return;
-            }
+            //TransformObject objnew = new TransformObject(parentTrans.position, parentTrans.rotation.eulerAngles, placeableObject.unlockableID, thisUnlockableName);
+            TransformObject objnew = new TransformObject(newPosition, newRotation, placeableObject.unlockableID, thisUnlockableName);
+            
+            Debug.Log(objnew.unlockableName + " ID " + objnew.unlockableID);
+            PersistentShipObjects.UpdateObjectManager(objnew);
 
-            PersistentShipObjects.DebugLog(indentMinusOne + "P " + parent.gameObject.GetType() + " named " + parent.name + "-------------------- P of " + parent.childCount, 'w');
 
-            foreach (Transform child in parent) {
-                PersistentShipObjects.DebugLog(indentMinusOne + TAB + child.GetType() + " named " + child.name);
-
-                if (child.childCount > 0) {
-                    DebugPrintDescendants(child, indentMinusOne);
-                }
-            }
+            PlaceShipObjectClientRpcEarlyReturn:
+            Console.WriteLine("early return");
         }
 
         /*
         [HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObject")]
-        [HarmonyPrefix]
-        public static void PlaceShipObject(ref Vector3 placementPosition, ref Vector3 placementRotation, PlaceableShipObject placeableObject) {
-            Debug.LogWarning("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\nAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA\n");
-            PersistentShipObjects.DebugLog("entering PlaceShipObject patch");
-            Transform oldTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(placementPosition, Quaternion.Euler(placementRotation));
-
-            //----------------------------------------------------------------------------------------------------------------------------------- start checks
-            if (placeableObject.transform == null) {
-                PersistentShipObjects.DebugLog("placeableObject.transform is null!");
-            
-            } else {
-                PersistentShipObjects.DebugLog("placeableObject.transform isn't null!");
-                String actualItemName = (placeableObject.transform.parent.gameObject)?.name;
-            
-                if (actualItemName != null) {
-                    PersistentShipObjects.DebugLog(placeableObject.GetType() + " named: " + actualItemName);
-
-                    PersistentShipObjects.DebugLog("parent pos is: " + placeableObject.transform.parent?.transform.position ?? null);
-                    PersistentShipObjects.DebugLog("parent rot is: " + placeableObject.transform.parent?.transform.rotation ?? null);
-
-                    Debug.Log("my grandparent: " + placeableObject.transform.parent?.transform.parent?.gameObject.name);
-                    PersistentShipObjects.DebugLog("printing tree");
-                    DebugPrintDescendantsWrapper(placeableObject.transform.parent?.transform);
-
-                    if (PersistentShipObjects.ObjTransforms?.ContainsKey(actualItemName) ?? false) {
-                        PersistentShipObjects.DebugLog("item in ObjTransforms!");
-                        Transform savedTransOffset = PersistentShipObjects.ObjTransforms[actualItemName];
-
-                        if (savedTransOffset == null) {
-                            Debug.LogError("saved trans offset is null!");
-                
-                        } else {
-                            //--------------------------------------------------------------------------------------------------------------------- end checks
-                            PersistentShipObjects.DebugLog("transform: " + savedTransOffset.ToString());
-
-                            Transform placeableObjectTransform = placeableObject.transform;
-                            Transform grandparentTransform = placeableObject.transform.parent?.transform.parent?.transform;
-
-                            Quaternion relativeRotation = Quaternion.Inverse(grandparentTransform.rotation) * savedTransOffset.rotation;
-
-                            if (lastPlacementPlayer > -1) {
-                                Debug.LogError("last placed object was by player " + lastPlacementPlayer + "; not updating placement transform after player placement");
-                                lastPlacementPlayer = -1;
-                        
-                            } else {
-                                Debug.LogError("last placed object was not by a player, updating transform");
-                                placementRotation = relativeRotation.eulerAngles;
-                                placementPosition = savedTransOffset.position - grandparentTransform.position;
-                            }/*
-
-                            PersistentShipObjects.DebugLog("transform: " + savedTransOffset.ToString());
-
-                            if (lastPlacementPlayer > -1) {
-                                Debug.LogError("last placed object was by player " + lastPlacementPlayer + "; not updating placement transform after player placement");
-                                lastPlacementPlayer = -1;
-
-                            } else {
-                                Debug.LogError("last placed object was not by a player, updating transform");
-                                placementRotation = savedTransOffset.eulerAngles;
-                                placementPosition = savedTransOffset.position;// - grandparentTransform.position;
-                            }*//*
-                        }
-                    } else {
-                        PersistentShipObjects.DebugLog("item not in ObjTransforms!");
-                 
-                    }
-                } else {
-                    PersistentShipObjects.DebugLog("item name is null!");
-             
-                }
-            }
-            PersistentShipObjects.DebugLog("trans before: " + oldTrans.position.ToString() + "; " + oldTrans.rotation.ToString());
-            oldTrans = PersistentShipObjects.PosAndRotAsGOWithTransform(placementPosition, Quaternion.Euler(placementRotation)) ?? null;
-            PersistentShipObjects.DebugLog("trans after: " + oldTrans.position.ToString() + "; " + oldTrans.rotation.ToString());
-            PersistentShipObjects.DebugLog("exiting PlaceShipObject patch & moving to PlaceShipObject");
-        }*/
-
-
-        [HarmonyPatch(typeof(StartOfRound), "StartGame")]
         [HarmonyPostfix]
-        public static void StartGame() {
-            lastPlacementPlayer = -1;
+        public static void PlaceShipObject(ref Vector3 placementPosition, ref Vector3 placementRotation, PlaceableShipObject placeableObject) {
+            makePSOFuckOff(placeableObject, "PlaceShipObject");
         }
+
+        [HarmonyPatch(typeof(ShipBuildModeManager), "ResetShipObjectToDefaultPosition")]
+        [HarmonyPostfix]
+        public static void ResetShipObjectToDefaultPosition(PlaceableShipObject placeableObject) {
+            makePSOFuckOff(placeableObject, "ResetShipObjectToDefaultPosition");
+        }//*/
+
+
+
+
+        /*[HarmonyPatch(typeof(ShipBuildModeManager), "Awake")] // some code nabbed from ResetShipObjectToDefaultPosition
+        [HarmonyPostfix]
+        public static void Awake(ref StartOfRound __instance) {
+            makeAllPSOsFuckOff("ShipBuildModeManager Awake()");
+        }//*/
+
+        /*[HarmonyPatch(typeof(StartOfRound), "OnEnable")] // some code nabbed from ResetShipObjectToDefaultPosition
+        [HarmonyPostfix]
+        public static void OnEnable() {
+            makeAllPSOsFuckOff("StartOfRound OnEnable()");
+        }//*/
+
+        /*[HarmonyPatch(typeof(ShipBuildModeManager), "PlaceShipObjectServerRpc")]
+        [HarmonyPostfix]
+        public static void PlaceShipObjectServerRpc(NetworkObjectReference objectRef) {
+            objectRef.TryGet(out NetworkObject netObj);
+            makePSOFuckOff(netObj.GetComponentInChildren<PlaceableShipObject>(), "PlaceShipObjectServerRpc");
+        }//*/
+
+
+
+        public static void makeAllPSOsFuckOff(string strxjksdf) {
+            foreach (PlaceableShipObject obj in GameObject.FindObjectsOfType(typeof(PlaceableShipObject))) {
+                makePSOFuckOff(obj, strxjksdf);
+            }
+        }//*/
+
+        public static void makePSOFuckOff(PlaceableShipObject obj, String caller) {
+            Debug.Log("sending PSO " + obj.name + " to fuck off land from " + caller + "&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&");
+
+            Vector3 fuckOffLand = new Vector3(1000, 10000, 1000);
+            if (obj.parentObjectSecondary != null) {
+                obj.parentObjectSecondary.position = fuckOffLand;
+            } else if (obj.parentObject != null) {
+                //obj.parentObject.positionOffset = fuckOffLand;
+                obj.transform.parent.position = fuckOffLand;
+            }
+        }
+
+                    
+
+        [HarmonyPatch(typeof(StartOfRound), "OnEnable")] // some code nabbed from ResetShipObjectToDefaultPosition
+        [HarmonyPostfix]
+        public static void Start(ref StartOfRound __instance)
+        {
+            Vector3 fuckOffLand = new Vector3(1000, 1000, 1000);
+
+            Debug.Log("MOVING SHIT AROUND!!!");
+            foreach (PlaceableShipObject obj in GameObject.FindObjectsOfType(typeof(PlaceableShipObject))) {
+
+                PersistentShipObjects.DebugPrintDescendantsWrapper(obj?.transform);
+                TransformObject foundObj = PersistentShipObjects.FindObjectIfExists(obj.unlockableID);
+                if (foundObj != null) {
+                    Debug.Log("    Item Found: " + foundObj.unlockableName + " at pos " + obj.transform.parent.transform.position);
+
+                    Debug.Log("        type: " + obj.GetType());
+                    Debug.Log("        name: " + obj.name);
+                    Debug.Log("        parent type: " + obj.transform.parent?.gameObject.GetType());
+                    Debug.Log("        parent name: " + obj.transform.parent?.name);
+
+                    //makePSOFuckOff(obj, "DO IT DO IT NOW FUCK OFF GO FUCK OFF NOW BITCH GOOOOOOO     AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+
+
+                    //__instance.unlockablesList.unlockables[obj.unlockableID].placedPosition = foundObj.pos.GetVector3();
+                    //__instance.unlockablesList.unlockables[obj.unlockableID].placedRotation = foundObj.rot.GetVector3();
+                    //__instance.unlockablesList.unlockables[obj.unlockableID].hasBeenMoved = false;
+
+                    //__instance.unlockablesList.unlockables[obj.unlockableID].placedPosition = fuckOffLand;
+                    //__instance.unlockablesList.unlockables[obj.unlockableID].placedRotation = foundObj.rot.GetVector3();
+                    //*/
+                    /*
+
+                    obj.parentObject.startingPosition = foundObj.pos.GetVector3();
+                    obj.parentObject.startingRotation = foundObj.rot.GetVector3();//*/
+
+                    obj.parentObject.transform.position = foundObj.pos.GetVector3();
+                    obj.parentObject.transform.rotation = Quaternion.Euler(foundObj.rot.GetVector3());//*/
+
+
+
+                    //obj.transform.parent.transform.position = foundObj.pos.GetVector3() + new Vector3 (0, 2, 0);
+                    //obj.transform.parent.transform.rotation = Quaternion.Euler(foundObj.rot.GetVector3());
+
+                    Debug.Log("        new pos: " + obj.transform.parent.position);
+                } else {
+                    Debug.Log("    couldn't find " + obj.transform.parent?.name);
+                }
+
+                /*Console.WriteLine("sending " + obj.name + " to fuckoff land");
+                obj.transform.position = fuckOffLand;
+                obj.transform.parent.position = fuckOffLand;
+                obj.transform.parent.parent.position = fuckOffLand;*/
+            }
+        }//*/
     }
 }
