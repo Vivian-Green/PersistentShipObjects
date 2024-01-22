@@ -6,16 +6,9 @@ using PersistentShipObjects.Patches;
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using System.Threading.Tasks;
 using System.Linq;
-using System.Reflection.Emit;
-using System.ComponentModel;
-using System.Collections;
 using Newtonsoft.Json;
 using System.IO;
-using Newtonsoft.Json.Linq;
-using System.Runtime.Serialization;
-using DunGen.Tags;
 
 // todo: ask chatgpt for this lmao
 
@@ -44,14 +37,11 @@ namespace PersistentShipObjects {
         private readonly Harmony harmony = new Harmony(GUID);
         public static PersistentShipObjects instance;
        
-        
-        // Location for Saved Objects
         public static string ObjTransformsPath = Application.persistentDataPath + "/PersistentShipObjects/Objects.json";
         public static string ObjTransformsFolderPath = Application.persistentDataPath + "/PersistentShipObjects";
 
         public static ConfigEntry<bool> doDebugPrints;
 
-        // Object Manager
         public static List<TransformObject> TransformObjectsManager; // no dict?? [megamind ascii but without fucking up export.py]
 
         const int A_CONCERNING_AMOUNT_OF_NESTING = 30; // arbitrary magic number for DebugPrintDescendants. a transform having a 
@@ -71,16 +61,8 @@ namespace PersistentShipObjects {
                 "should PersistentShipObjects paint the console yellow?"
             );
 
-            if (!File.Exists(ObjTransformsFolderPath))
-            {
-                Directory.CreateDirectory(ObjTransformsFolderPath);
-            }
-
-            if (!File.Exists(ObjTransformsPath))
-            {
-                File.Create(ObjTransformsPath).Dispose();
-            }
-
+            if (!File.Exists(ObjTransformsFolderPath)) Directory.CreateDirectory(ObjTransformsFolderPath);
+            if (!File.Exists(ObjTransformsPath)) File.Create(ObjTransformsPath).Dispose();
             TransformObjectsManager = ReadJSON();
 
             //Config.Save();
@@ -88,27 +70,23 @@ namespace PersistentShipObjects {
             Harmony.CreateAndPatchAll(typeof(ShipBuildModeManagerPatch));
         }
 
-        // Write to file, should be called every time an update occurs
-        // Updates occur on placement editing
         public static void SaveObjTransforms() {
             var str = JsonConvert.SerializeObject(TransformObjectsManager);
-            Debug.Log("JSON: ");
-            Debug.Log(str);
+            //Debug.Log("JSON: ");
+            //Debug.Log(str);
             File.WriteAllText(ObjTransformsPath, str);
         }
         
-        // Finds object in manager via UnlockableID searching ObjectManager
         public static TransformObject FindObjectIfExists(int unlockableID) {
             return TransformObjectsManager.FirstOrDefault(obj => obj.unlockableID == unlockableID);
         }
 
-        // Updates ObjectsManager with each update
         public static void UpdateObjectManager(TransformObject newObj) {
             if (newObj == null) return;
 
-            TransformObject oldObjIfExists = TransformObjectsManager.FirstOrDefault(thisObj => thisObj.unlockableID == newObj.unlockableID);
-
-            if (oldObjIfExists != null) TransformObjectsManager.Remove(oldObjIfExists);
+            // remove TransformObject if exists, before adding
+            TransformObject oldObjIfExists = FindObjectIfExists(newObj.unlockableID);
+            if (oldObjIfExists != null) TransformObjectsManager.Remove(oldObjIfExists); 
 
             TransformObjectsManager.Add(newObj);
             SaveObjTransforms();

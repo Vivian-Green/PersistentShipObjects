@@ -14,18 +14,6 @@ namespace PersistentShipObjects {
             unlockableID = newUnlockableID;
             unlockableName = newUnlockableName;
         }
-
-        public Vector3 Get(string val) {
-            switch (val.ToLower()) {
-                case "pos":
-                    return pos.GetVector3();
-                case "rot":
-                    return rot.GetVector3();
-                default:
-                    break;
-            }
-            return Vector3.zero; //
-        }
      }
 
     public class AltVector3 {

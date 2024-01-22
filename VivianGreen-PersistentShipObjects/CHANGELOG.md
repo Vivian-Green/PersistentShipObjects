@@ -1,3 +1,6 @@
+## 0.2.2
+ - lot of cleanup
+
 ## 0.2.1
  - significant rewrite, (with a lot of help from ghxc2- get credited on)
  - hella cleanup
